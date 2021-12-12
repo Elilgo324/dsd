@@ -1,4 +1,4 @@
-from manim.utils.point import Point
+from utils.point import Point
 from utils.consts import Consts
 import math
 

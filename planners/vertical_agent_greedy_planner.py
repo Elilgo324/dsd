@@ -4,7 +4,7 @@ from typing import Dict, List
 
 from agents.base_agent import BaseAgent
 from planners.planner import Planner
-from robots.base_robot import BaseRobot
+from robots.base_robot import BasicRobot
 from simulator.environment import Environment
 from utils.point import Point
 from utils.consts import Consts
@@ -14,7 +14,7 @@ class VerticalAgentGreedyPlanner(Planner):
     def __init__(self, environment: Environment):
         super().__init__(environment)
 
-    def plan(self) -> Dict[BaseRobot, List[Point]]:
+    def plan(self) -> Dict[BasicRobot, List[Point]]:
         robots = self._environment.robots
         agents = [agent.clone() for agent in self._environment.agents]
 
@@ -27,7 +27,7 @@ class VerticalAgentGreedyPlanner(Planner):
 
         return movement
 
-    def check_meeting(self, robot: BaseRobot, agent: BaseAgent, limit=Consts.SIZE_Y):
+    def check_meeting(self, robot: BasicRobot, agent: BaseAgent, limit=Consts.SIZE_Y):
         #TODO
 
         # calc here meeting loc and time

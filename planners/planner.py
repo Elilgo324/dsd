@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Dict, List
 
 from agents.base_agent import BaseAgent
-from robots.base_robot import BaseRobot
+from robots.base_robot import BasicRobot
 from simulator.environment import Environment
 from utils.point import Point
 from utils.consts import Consts
@@ -17,7 +17,7 @@ class Planner(ABC):
         for robot in self._robots:
             robot.set_movement(plan[robot])
 
-    def plan(self) -> Dict[BaseRobot, List[Point]]:
+    def plan(self) -> Dict[BasicRobot, List[Point]]:
         pass
 
 

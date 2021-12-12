@@ -1,6 +1,8 @@
 
 
 class Consts:
+    DEBUG = True
+
     EPSILON = 1e-5
 
     # environment
@@ -12,9 +14,9 @@ class Consts:
 
     # robot
     ROBOT_NUM = 2
-    ROBOT_DEF_SPEED = 0.5
-    DISABLEMENT_RANGE = 0.5
+    ROBOT_DEF_SPEED = 1
+    DISABLEMENT_RANGE = 1
 
     # agent
     AGENT_NUM = 2
-    AGENT_DEF_SPEED = 0.2
+    AGENT_DEF_SPEED = 0.5

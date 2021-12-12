@@ -1,12 +1,12 @@
-
 from copy import deepcopy
 
 from utils.point import Point
 from utils.consts import Consts
 from typing import List
 
-class BaseRobot:
-    def __init__(self, loc: Point, fv: float =Consts.ROBOT_DEF_SPEED, r: float =Consts.DISABLEMENT_RANGE):
+
+class BasicRobot:
+    def __init__(self, loc: Point, fv: float = Consts.ROBOT_DEF_SPEED, r: float = Consts.DISABLEMENT_RANGE):
         self._loc = loc
         self._fv = fv
         self._r = r
@@ -32,10 +32,10 @@ class BaseRobot:
     def r(self) -> float:
         return self._r
 
-    def set_movement(self, movement: List[Point]):
+    def set_movement(self, movement: List[Point]) -> None:
         self._movement = movement
 
-    def advance(self, debug=False):
+    def advance(self) -> None:
         if self._movement:
             prev_loc = self.loc
             target = self._movement[0]
@@ -47,11 +47,11 @@ class BaseRobot:
                 self._loc = self._movement[0]
                 self._movement.pop(0)
 
-            print(f'{str(self)}: {prev_loc} -> {self.loc}')
+            if Consts.DEBUG:
+                print(f'{str(self)}: {prev_loc} -> {self.loc}')
 
-    def clone(self) -> 'BaseRobot':
+    def clone(self) -> 'BasicRobot':
         return deepcopy(self)
 
     def __str__(self):
         return f'Robot({self.x},{self.y})'
-
