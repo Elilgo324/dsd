@@ -3,7 +3,6 @@ import random
 import numpy as np
 from agents.fixed_velocity_agent import UpwardsAgent
 from manimlib import *
-from planners.vertical_agent_greedy_planner import VerticalAgentGreedyPlanner
 from planners.example_planner import ExamplePlanner
 from robots.base_robot import BasicRobot
 from simulator.environment import Environment
