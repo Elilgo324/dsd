@@ -6,11 +6,11 @@ class Consts:
     EPSILON = 1e-5
 
     # environment
-    SIZE_X = 30
-    SIZE_Y = 30
-    SIZE = (SIZE_X, SIZE_Y)
-    X_RANGE = (-int(SIZE_X/2),int(SIZE_X/2))
-    Y_RANGE = (-int(SIZE_Y/2),int(SIZE_Y/2))
+    X_SIZE = 30
+    Y_SIZE = 30
+    SIZE = (X_SIZE, Y_SIZE)
+    X_RANGE = (0, X_SIZE)
+    Y_RANGE = (0, Y_SIZE)
 
     # robot
     ROBOT_NUM = 2

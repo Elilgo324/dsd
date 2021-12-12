@@ -1,8 +1,9 @@
 from agents.fixed_velocity_agent import FixedVelocityAgent
-from planners.naive_planners.vertical_agent_greedy_planner import VerticalAgentGreedyPlanner
+from planners.naive_planners.inital_and_random_walk_planner import VerticalAgentGreedyPlanner
 from robots.base_robot import BasicRobot
 from simulator.environment import Environment
 from utils.point import Point
+import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     agents = [FixedVelocityAgent(Point(5,5)), FixedVelocityAgent(Point(10,5))]

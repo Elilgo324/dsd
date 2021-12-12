@@ -24,10 +24,11 @@ class VerticalAgentGreedyPlanner(Planner):
             agent = agents.pop()
             robot = random.choice(robots)
             movement[robot].append(agent.loc)
+            movement[robot].append(Point(agent.x,Consts.Y_SIZE))
 
         return movement
 
-    def check_meeting(self, robot: BasicRobot, agent: BaseAgent, limit=Consts.SIZE_Y):
+    def check_meeting(self, robot: BasicRobot, agent: BaseAgent, limit=Consts.Y_SIZE):
         #TODO
 
         # calc here meeting loc and time

@@ -1,3 +1,4 @@
+from time import sleep
 from typing import List
 
 from agents.base_agent import BaseAgent
@@ -34,6 +35,7 @@ class Environment:
         self._steps += 1
 
         if Consts.DEBUG:
+            sleep(1)
             print(f'*** step: {self._steps} ***')
             print(f'#robots: {len(self.robots)}')
             print(f'#agents: {len(self.agents)}')
