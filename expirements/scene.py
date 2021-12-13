@@ -5,7 +5,7 @@ from agents.fixed_velocity_agent import UpwardsAgent
 from manimlib import *
 from planners.example_planner import ExamplePlanner
 from robots.base_robot import BasicRobot
-from simulator.environment import Environment
+from environment import Environment
 from utils.point import Point
 from utils.consts import Consts
 

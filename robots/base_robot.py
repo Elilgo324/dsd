@@ -1,8 +1,8 @@
 from copy import deepcopy
-
-from utils.point import Point
-from utils.consts import Consts
 from typing import List
+
+from utils.consts import Consts
+from utils.point import Point
 
 
 class BasicRobot:
