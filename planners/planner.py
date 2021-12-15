@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Dict, List
 
 from agents.base_agent import BaseAgent
-from robots.base_robot import BasicRobot
+from robots.basic_robot import BasicRobot
 from environment import Environment
 from utils.point import Point
 from utils.consts import Consts
