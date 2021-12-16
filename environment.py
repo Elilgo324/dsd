@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from agents.base_agent import BaseAgent
 from robots.basic_robot import BasicRobot
@@ -7,9 +7,10 @@ from copy import deepcopy
 
 
 class Environment:
-    def __init__(self, robots: List[BasicRobot], agents: List[BaseAgent]):
+    def __init__(self, robots: List[BasicRobot], agents: List[BaseAgent], world_size: Tuple[int, int]):
         self._agents = agents
         self._robots = robots
+        self._world_size = world_size
         self._acc_damage = 0
         self._step = 0
         self._agents_disabled = 0
@@ -22,6 +23,10 @@ class Environment:
     @property
     def agents(self) -> List[BaseAgent]:
         return self._agents
+
+    @property
+    def world_size(self) -> Tuple[int, int]:
+        return self._world_size
 
     @property
     def step(self) -> int:
@@ -50,20 +55,22 @@ class Environment:
 
         for agent in self.agents:
             agent.advance()
-            self._acc_damage += Consts.AGENT_DEF_SPEED
+            self._acc_damage += agent.v
 
         # check disablement and escaped
         for agent in self.agents:
             for robot in self.robots:
-                if agent.loc.distance_to(robot.loc) <= Consts.DISABLEMENT_RANGE + 0.1:
+                if agent.loc.distance_to(robot.loc) <= robot.r + 0.1:
                     self.agents.remove(agent)
                     self._agents_disabled += 1
-                    print('agent disabled')
+                    if Consts.DEBUG:
+                        print('agent disabled')
                     break
-                if agent.y > Consts.Y_SIZE:
+                if agent.y > self._world_size[1]:
                     self.agents.remove(agent)
                     self._agents_escaped += 1
-                    print('agent escaped')
+                    if Consts.DEBUG:
+                        print('agent escaped')
                     break
 
         return len(self.agents) == 0

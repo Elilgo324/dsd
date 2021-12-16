@@ -6,7 +6,7 @@ from utils.consts import Consts
 
 
 class BaseAgent(ABC):
-    def __init__(self, loc: Point, v=Consts.AGENT_DEF_SPEED):
+    def __init__(self, loc: Point, v: float):
         self._loc = loc
         self._v = v
         self._is_disabled = False

@@ -1,25 +1,18 @@
-import random
-from typing import Dict, List
-
-from agents.base_agent import BaseAgent
 from planners.planner import Planner
-from robots.basic_robot import BasicRobot
-from environment import Environment
 from utils.functions import *
 
 
 class RandomWalk10Planner(Planner):
-    def __init__(self, environment: Environment):
-        super().__init__(environment)
-
-    def plan(self) -> None:
-        robots = self._environment.robots
+    def plan(self, env: Environment) -> None:
+        robots = env.robots
 
         movement = {robot: [] for robot in robots}
 
+        x_max, y_max = env.world_size
+
         for _ in range(10):
             for robot in robots:
-                movement[robot].append(sample_point())
+                movement[robot].append(sample_point(0, x_max, 0, y_max))
 
         for robot in robots:
             robot.set_movement(movement[robot])

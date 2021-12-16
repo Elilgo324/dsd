@@ -1,0 +1,17 @@
+
+SEED = 42
+
+# environment
+X_SIZE = 50
+Y_SIZE = 50
+SIZE = (X_SIZE, Y_SIZE)
+X_RANGE = (0, X_SIZE)
+Y_RANGE = (0, Y_SIZE)
+
+# robot
+ROBOT_SPEED = 2
+DISABLEMENT_RANGE = 1
+
+# agent
+AGENT_NUM = 8
+AGENT_SPEED = 1

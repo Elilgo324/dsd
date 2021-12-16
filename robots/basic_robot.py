@@ -6,7 +6,7 @@ from utils.point import Point
 
 
 class BasicRobot:
-    def __init__(self, loc: Point, fv: float = Consts.ROBOT_DEF_SPEED, r: float = Consts.DISABLEMENT_RANGE):
+    def __init__(self, loc: Point, fv: float, r: float):
         self._loc = loc
         self._fv = fv
         self._r = r

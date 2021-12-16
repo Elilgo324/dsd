@@ -11,12 +11,9 @@ from utils.functions import *
 
 
 class OnlineChasingPlanner(Planner):
-    def __init__(self, environment: Environment):
-        super().__init__(environment)
-
-    def plan(self) -> None:
-        robots = self._environment.robots
-        agents = self._environment.agents
+    def plan(self, env: Environment) -> None:
+        robots = env.robots
+        agents = env.agents
 
         distances = [[] for _ in range(len(robots))]
         for i in range(len(robots)):
@@ -32,6 +29,5 @@ class OnlineChasingPlanner(Planner):
         for robot in robots:
             robot.set_movement(movement[robot])
 
-
     def __str__(self):
-        return 'RandomWalk10Planner'
+        return 'OnlineChasingPlanner'
