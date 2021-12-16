@@ -55,7 +55,7 @@ class Environment:
         # check disablement and escaped
         for agent in self.agents:
             for robot in self.robots:
-                if agent.loc.distance_to(robot.loc) < Consts.DISABLEMENT_RANGE + 0.01:
+                if agent.loc.distance_to(robot.loc) <= Consts.DISABLEMENT_RANGE + 0.1:
                     self.agents.remove(agent)
                     self._agents_disabled += 1
                     print('agent disabled')

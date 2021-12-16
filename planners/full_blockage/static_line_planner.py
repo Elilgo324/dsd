@@ -8,16 +8,7 @@ from utils.functions import *
 from math import sqrt
 
 
-def makespan(h, x_m, x_m0, y_m0):
-    return sqrt((x_m - x_m0)**2 + (h - y_m0)**2) / Consts.ROBOT_DEF_SPEED
 
-
-def escaping_agents(h):
-    pass
-
-
-def damage_score(h):
-    pass
 
 
 class StaticLinePlanner(Planner):
@@ -48,7 +39,7 @@ class StaticLinePlanner(Planner):
         sorted_pairs = sorted(enumerate_object, key=operator.itemgetter(1))
         sorted_indices = [index for index, element in sorted_pairs]
 
-        pows = 1
+        pows = 2**-10
         for i in sorted_indices:
             row = i // len(robots)
             col = i % len(robots)
@@ -69,11 +60,39 @@ class StaticLinePlanner(Planner):
         y_m0 = farthest_robot.y
         x_m = optimal_x[farthest_robot]
 
+        def makespan(h):
+            return sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / Consts.ROBOT_DEF_SPEED
+
+        def escaping_agents(h):
+            i_escaping = []
+            for i in range(len(agents)):
+                y_a0 = agents[i].y
+                if y_a0 > h - sqrt((x_m - x_m0)**2 + (h-y_m0)**2) / f:
+                    i_escaping.append(i)
+            return i_escaping
+
+        def damage_score(h):
+            damage = 0
+            for i in range(len(agents)):
+                y_a0 = agents[i].y
+                damage += max(h-y_a0, 0)
+            for i in escaping_agents(h):
+                y_a0 = agents[i].y
+                damage += min(Consts.Y_SIZE - h, Consts.Y_SIZE - y_a0)
+            return damage
+
+
+        f = Consts.ROBOT_DEF_SPEED / Consts.AGENT_DEF_SPEED
+        H = []
+        for a in agents:
+            y_a0 = a.y
+            H.append((f**2 * y_a0 + sqrt((f * y_a0 - f * y_m0)**2 + (x_m - x_m0)**2 * (f**2 - 1)))/(f**2-1))
+
+        h_opt = min(H, key=damage_score)
 
         for i in range(len(optimal_assignment[0])):
-            # todo change y
-            assigned_location = locations[optimal_assignment[1][i]]
-            movement[robots[optimal_assignment[0][i]]].append(assigned_location)
+            assigned_robot = robots[optimal_assignment[0][i]]
+            movement[assigned_robot].append(Point(optimal_x[assigned_robot],H[2]))
 
         for robot in robots:
             robot.set_movement(movement[robot])

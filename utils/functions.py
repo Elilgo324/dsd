@@ -14,7 +14,7 @@ from utils.point import Point
 
 
 def sample_point() -> Point:
-    return Point(uniform(*Consts.X_RANGE), randint(*Consts.Y_RANGE))
+    return Point(uniform(*Consts.X_RANGE), uniform(*Consts.Y_RANGE))
 
 
 def sample_point_above(y_min: float) -> Point:

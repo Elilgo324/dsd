@@ -14,7 +14,7 @@ from utils.functions import *
 if __name__ == '__main__':
     seed(42)
 
-    agents = [FixedVelocityAgent(sample_point_between(0.1 * Consts.Y_SIZE, 0.6 * Consts.Y_SIZE)) for _ in range(
+    agents = [FixedVelocityAgent(sample_point_between(0.1 * Consts.Y_SIZE, 0.5 * Consts.Y_SIZE)) for _ in range(
         Consts.AGENT_NUM)]
 
     y_min = min([a.y for a in agents])
@@ -25,9 +25,9 @@ if __name__ == '__main__':
 
     env = Environment(agents=agents, robots=robots)
     # planner = RandomWalk10Planner(env)
-    # planner = OfflineChasingPlanner(env)
+    planner = OfflineChasingPlanner(env)
     # planner = OnlineChasingPlanner(env)
-    planner = StaticLinePlanner(environment=env)
+    # planner = StaticLinePlanner(environment=env)
 
     planner.plan()
 
