@@ -1,6 +1,8 @@
 import random
 from typing import Dict, List
 
+from scipy.optimize import linear_sum_assignment
+
 from agents.base_agent import BaseAgent
 from planners.planner import Planner
 from robots.basic_robot import BasicRobot
@@ -8,21 +10,28 @@ from environment import Environment
 from utils.functions import *
 
 
-class RandomWalk10Planner(Planner):
+class OnlineChasingPlanner(Planner):
     def __init__(self, environment: Environment):
         super().__init__(environment)
 
     def plan(self) -> None:
         robots = self._environment.robots
+        agents = self._environment.agents
+
+        distances = [[] for _ in range(len(robots))]
+        for i in range(len(robots)):
+            distances[i] = [robots[i].loc.distance_to(agents[j].loc) for j in range(len(agents))]
+
+        optimal_assignment = linear_sum_assignment(distances)
 
         movement = {robot: [] for robot in robots}
 
-        for _ in range(10):
-            for robot in robots:
-                movement[robot].append(sample_point())
+        for i in range(len(optimal_assignment[0])):
+            movement[robots[optimal_assignment[0][i]]].append(agents[optimal_assignment[1][i]])
 
         for robot in robots:
             robot.set_movement(movement[robot])
+
 
     def __str__(self):
         return 'RandomWalk10Planner'

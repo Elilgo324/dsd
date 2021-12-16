@@ -1,25 +1,60 @@
-from random import randint
+import os
+from datetime import datetime
+from random import randint, uniform
 from typing import List
 
+import imageio as imageio
+import matplotlib.pyplot as plt
+
 from agents.base_agent import BaseAgent
+from environment import Environment
 from robots.basic_robot import BasicRobot
 from utils.consts import Consts
 from utils.point import Point
 
-import matplotlib.pyplot as plt
-
 
 def sample_point() -> Point:
-    return Point(randint(*Consts.X_RANGE), randint(*Consts.Y_RANGE))
+    return Point(uniform(*Consts.X_RANGE), randint(*Consts.Y_RANGE))
 
 
-def sample_point_under(y_limit: int) -> Point:
-    return Point(randint(*Consts.X_RANGE), randint(0,y_limit))
+def sample_point_above(y_min: float) -> Point:
+    return Point(uniform(*Consts.X_RANGE), uniform(y_min, Consts.Y_SIZE))
 
 
-def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent]) -> None:
-    plt.xlim(*Consts.X_RANGE)
-    plt.ylim(*Consts.Y_RANGE)
+def sample_point_under(y_max: float) -> Point:
+    return Point(uniform(*Consts.X_RANGE), uniform(0, y_max))
+
+
+def sample_point_between(y_min: float, y_max: float) -> Point:
+    return Point(uniform(*Consts.X_RANGE), uniform(y_min, y_max))
+
+
+def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent], env: Environment) -> None:
+    buffer = 10
+    plt.clf()
+    plt.xlim(-buffer, Consts.X_SIZE + buffer)
+    plt.ylim(-buffer, Consts.Y_SIZE + buffer)
+    plt.plot([0, 0, Consts.X_SIZE, Consts.X_SIZE, 0], [0, Consts.Y_SIZE, Consts.Y_SIZE, 0, 0], c='black')
     plt.scatter([r.x for r in robots], [r.y for r in robots], c='blue')
+    for i in range(len(robots)):
+        plt.annotate(i, (robots[i].x, robots[i].y))
     plt.scatter([a.x for a in agents], [a.y for a in agents], c='red')
-    plt.show()
+    plt.title(env.stats(), fontsize=10)
+    plt.savefig(f'./plots/{env.step}')
+
+
+def create_gif_from_plots():
+    filenames = os.listdir('./plots/')
+    filenames = [file[:-4] for file in filenames]
+    with imageio.get_writer(f'./gifs/{datetime.now().minute}.gif', mode='I') as writer:
+        for filename in sorted(filenames, key=int):
+            image = imageio.imread('./plots/' + filename + '.png')
+            writer.append_data(image)
+
+    # Remove files
+    for filename in filenames:
+        os.remove('./plots/' + filename + '.png')
+
+
+def write_report():
+    pass

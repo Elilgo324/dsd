@@ -11,7 +11,7 @@ class Environment:
         self._agents = agents
         self._robots = robots
         self._acc_damage = 0
-        self._steps = 0
+        self._step = 0
         self._agents_disabled = 0
         self._agents_escaped = 0
 
@@ -23,6 +23,10 @@ class Environment:
     def agents(self) -> List[BaseAgent]:
         return self._agents
 
+    @property
+    def step(self) -> int:
+        return self._step
+
     def clone_robots(self) -> List[BasicRobot]:
         return deepcopy(self._robots)
 
@@ -33,10 +37,10 @@ class Environment:
         return self.robots[i]
 
     def advance(self) -> bool:
-        self._steps += 1
+        self._step += 1
 
         if Consts.DEBUG:
-            print(f'*** step: {self._steps} ***')
+            print(f'*** step: {self._step} ***')
             print(f'#robots: {len(self.robots)}')
             print(f'#agents: {len(self.agents)}')
             print(f'acc damage: {self._acc_damage}')
@@ -46,12 +50,12 @@ class Environment:
 
         for agent in self.agents:
             agent.advance()
-            self._acc_damage += 1
+            self._acc_damage += Consts.AGENT_DEF_SPEED
 
         # check disablement and escaped
         for agent in self.agents:
             for robot in self.robots:
-                if agent.loc.distance_to(robot.loc) < Consts.DISABLEMENT_RANGE:
+                if agent.loc.distance_to(robot.loc) < Consts.DISABLEMENT_RANGE + 0.01:
                     self.agents.remove(agent)
                     self._agents_disabled += 1
                     print('agent disabled')
@@ -64,9 +68,8 @@ class Environment:
 
         return len(self.agents) == 0
 
-    def results(self) -> str:
-        return f'*** results *** ' \
-               f'\n steps: {self._steps}' \
-               f'\n accumulated damage: {round(self._acc_damage, 2)}' \
-               f'\n agents disabled: {self._agents_disabled}' \
-               f'\n agents escaped: {self._agents_escaped}:'
+    def stats(self) -> str:
+        return f'steps: {self._step}' \
+               f'   acc damage: {round(self._acc_damage, 2)}' \
+               f'   agents disabled: {self._agents_disabled}' \
+               f'   agents escaped: {self._agents_escaped}'

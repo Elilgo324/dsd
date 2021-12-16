@@ -13,11 +13,7 @@ class Planner(ABC):
         self._environment = environment
         self._robots = environment.robots
 
-        plan = self.plan()
-        for robot in self._robots:
-            robot.set_movement(plan[robot])
-
-    def plan(self) -> Dict[BasicRobot, List[Point]]:
+    def plan(self) -> None:
         pass
 
 
