@@ -29,20 +29,20 @@ def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent], env: Env
         plt.annotate(i, (robots[i].x, robots[i].y))
     plt.scatter([a.x for a in agents], [a.y for a in agents], c='red')
     plt.title(env.stats(), fontsize=10)
-    plt.savefig(f'../plots/{env.step}')
+    plt.savefig(f'./plots/{env.step}')
 
 
 def create_gif_from_plots(prefix=''):
-    filenames = os.listdir('../plots/')
+    filenames = os.listdir('./plots/')
     filenames = [file[:-4] for file in filenames]
-    with imageio.get_writer(f'../gifs/{prefix}-{datetime.now().minute}.gif', mode='I') as writer:
+    with imageio.get_writer(f'./gifs/{prefix}-{datetime.now().minute}.gif', mode='I') as writer:
         for filename in sorted(filenames, key=int):
-            image = imageio.imread('../plots/' + filename + '.png')
+            image = imageio.imread('./plots/' + filename + '.png')
             writer.append_data(image)
 
     # Remove files
     for filename in filenames:
-        os.remove('../plots/' + filename + '.png')
+        os.remove('./plots/' + filename + '.png')
 
 
 def write_report():

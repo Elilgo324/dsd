@@ -4,6 +4,7 @@ from random import seed
 from agents.fixed_velocity_agent import FixedVelocityAgent
 from config import *
 from planners.full_blockage.static_line_planner import StaticLinePlanner
+from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.naive_planners.offline_chasing_planner import OfflineChasingPlanner
 from planners.naive_planners.online_chasing_planner import OnlineChasingPlanner
 from planners.naive_planners.random_walk_10_planner import RandomWalk10Planner
@@ -30,6 +31,7 @@ def run(planner: Planner):
 
     is_finished = False
     while not is_finished:
+        # if env.step % 5 == 0:
         plot_environment(robots, agents, env)
         is_finished = env.advance()
     plot_environment(robots, agents, env)
@@ -40,7 +42,6 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
-    planners = [StaticLinePlanner()]
+    planners = [TravelingLinePlanner()]
     for planner in planners:
         run(planner)
