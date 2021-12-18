@@ -1,3 +1,4 @@
+import math
 import operator
 from math import ceil
 from math import sqrt
@@ -68,20 +69,28 @@ class TravelingLinePlanner(Planner):
 
         def line_trpv(h):
             def time_to_meet(source, target):
-                if source.y < target.y:
-                    delta_y = target.y - source.y
+                if source < target:
+                    delta_y = target - source
                     time_to_meet = delta_y / (fv + v)
                 else:
-                    delta_y = source.y - target.y
+                    delta_y = source - target
                     time_to_meet = delta_y / (fv - v)
                 return time_to_meet
 
-            A_up = [] + sorted([a for a in agents if a.y >= h], key=lambda a: a.y)
-            A_down = sorted([a for a in agents if a.y < h], reverse=True, key=lambda a: a.y)
+            agents_ys = [a.y for a in agents]
+            A_up = [h] + sorted([a for a in agents_ys if a >= h])
+            A_down = [h] + sorted([a for a in agents_ys if a < h], reverse=True)
 
-            T = {a1: {a2: {'damage': None, 'ys': None} for a2 in agents} for a1 in agents}
-            T[A_down[0]][A_up[0]] = {'damage': 0, 'ys': [A_down[0].y]}
-            T[A_up[0]][A_down[0]] = {'damage': 0, 'ys': [A_up[0].y]}
+            T = {a1: {a2: {'damage': 0, 'ys': []} for a2 in A_up + A_down} for a1 in A_up + A_down}
+            T[h][h] = {'damage': 0, 'ys': [h]}
+
+            for i in range(len(A_up)):
+                T[h][A_up[i]] = {'damage': math.inf, 'ys': []}
+                T[A_up[i]][h] = {'damage': time_to_meet(h, A_up[i]) * len(agents), 'ys': [h, A_up[i]]}
+
+            for i in range(len(A_down)):
+                T[h][A_down[i]] = {'damage': math.inf, 'ys': []}
+                T[A_down[i]][h] = {'damage': time_to_meet(h, A_down[i]) * len(agents), 'ys': [h, A_down[i]]}
 
             for i in range(1, max(len(A_up), len(A_down))):
                 for j in range(0, max(len(A_up), len(A_down))):
@@ -99,11 +108,11 @@ class TravelingLinePlanner(Planner):
                         if damage_reaching_from_up < damage_reaching_from_down:
                             T[A_up[i]][A_down[j]]['damage'] = damage_reaching_from_up
                             path_reaching_from_up = T[A_up[i - 1]][A_down[j]]['ys']
-                            T[A_up[i]][A_down[j]]['path'] = path_reaching_from_up + [A_up[i].loc]
+                            T[A_up[i]][A_down[j]]['path'] = path_reaching_from_up + [A_up[i]]
                         else:
                             T[A_up[i]][A_down[j]]['damage'] = damage_reaching_from_down
                             path_reaching_from_down = T[A_down[j]][A_up[i - 1]]['ys']
-                            T[A_up[i]][A_down[j]]['path'] = path_reaching_from_down + [A_up[i].loc]
+                            T[A_up[i]][A_down[j]]['path'] = path_reaching_from_down + [A_up[i]]
 
                     if j < len(A_up) and i < len(A_down):
                         time_reaching_from_up = time_to_meet(A_up[j], A_down[i])
@@ -117,19 +126,19 @@ class TravelingLinePlanner(Planner):
                         if damage_reaching_from_up < damage_reaching_from_down:
                             T[A_down[i]][A_up[j]]['damage'] = damage_reaching_from_up
                             path_reaching_from_up = T[A_up[j]][A_down[i - 1]]['ys']
-                            T[A_down[i]][A_up[j]]['path'] = path_reaching_from_up + [A_down[i].loc]
+                            T[A_down[i]][A_up[j]]['path'] = path_reaching_from_up + [A_down[i]]
                         else:
                             T[A_down[i]][A_up[j]]['damage'] = damage_reaching_from_down
                             path_reaching_from_down = T[A_down[i - 1]][A_up[j]]['ys']
-                            T[A_down[i]][A_up[j]]['path'] = path_reaching_from_down + [A_down[i].loc]
+                            T[A_down[i]][A_up[j]]['path'] = path_reaching_from_down + [A_down[i]]
 
-            damage_up, movement_up = T[A_up[-1]][A_down[-1]]['damage'], T[A_up[-1]][A_down[-1]]['path']
-            damage_down, movement_down = T[A_down[-1]][A_up[-1]]['damage'], T[A_down[-1]][A_up[-1]]['path']
+            damage_up, movement_up = T[A_up[-1]][A_down[-1]]['damage'], T[A_up[-1]][A_down[-1]]['ys']
+            damage_down, movement_down = T[A_down[-1]][A_up[-1]]['damage'], T[A_down[-1]][A_up[-1]]['ys']
             if damage_up < damage_down:
                 return damage_up, movement_up
             return damage_down, movement_down
 
-        scores_and_movements = [line_trpv(h) for h in H]
+        h_scores_movements = {h: line_trpv(h) for h in H}
 
         def t_max(h):
             return sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / fv
@@ -138,11 +147,17 @@ class TravelingLinePlanner(Planner):
             score, _ = line_trpv(h)
             return score + (len(agents) * t_max(h)) / fv
 
-        h_opt = min(H, key=damage_score)
+        h_opt = min(H, key= lambda h:h_scores_movements[h][0])
 
         for i in range(len(optimal_assignment[0])):
             assigned_robot = robots[optimal_assignment[0][i]]
             movement[assigned_robot].append(Point(optimal_x[assigned_robot], h_opt))
+
+        trp_ys = h_scores_movements[h_opt][1]
+        for i in range(len(optimal_assignment[0])):
+            assigned_robot = robots[optimal_assignment[0][i]]
+            for y in trp_ys:
+                movement[assigned_robot].append(Point(optimal_x[assigned_robot], y))
 
         for robot in robots:
             robot.set_movement(movement[robot])
