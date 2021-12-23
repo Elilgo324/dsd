@@ -1,6 +1,7 @@
 import operator
 from math import ceil
 from math import sqrt
+from typing import Tuple, Dict
 
 from scipy.optimize import linear_sum_assignment
 
@@ -9,7 +10,7 @@ from utils.functions import *
 
 
 class StaticLinePlanner(Planner):
-    def plan(self, env: Environment) -> None:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float]:
         robots = env.robots
         agents = env.agents
         movement = {robot: [] for robot in robots}
@@ -90,8 +91,10 @@ class StaticLinePlanner(Planner):
             assigned_robot = robots[optimal_assignment[0][i]]
             movement[assigned_robot].append(Point(optimal_x[assigned_robot], h_opt))
 
-        for robot in robots:
-            robot.set_movement(movement[robot])
+        def makespan(h):
+            return sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / fv
+
+        return movement, makespan(h_opt)
 
     def __str__(self):
         return 'StaticLinePlanner'

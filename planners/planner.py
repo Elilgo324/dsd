@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Dict, List
+from typing import Dict, List, Union, Tuple
 
 from agents.base_agent import BaseAgent
 from robots.basic_robot import BasicRobot
@@ -9,7 +9,7 @@ from utils.consts import Consts
 
 
 class Planner(ABC):
-    def plan(self, environment: Environment) -> None:
+    def plan(self, environment: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float]:
         pass
 
 

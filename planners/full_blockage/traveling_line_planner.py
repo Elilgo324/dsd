@@ -1,7 +1,7 @@
-import math
 import operator
 from math import ceil
 from math import sqrt
+from typing import Dict, Tuple
 
 from scipy.optimize import linear_sum_assignment
 
@@ -10,7 +10,7 @@ from utils.functions import *
 
 
 class TravelingLinePlanner(Planner):
-    def plan(self, env: Environment) -> None:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float]:
         robots = env.robots
         agents = env.agents
         movement = {robot: [] for robot in robots}
@@ -38,7 +38,7 @@ class TravelingLinePlanner(Planner):
         sorted_pairs = sorted(enumerate_object, key=operator.itemgetter(1))
         sorted_indices = [index for index, element in sorted_pairs]
 
-        pows = 2 ** -10
+        pows = 2 ** -int(len(agents) / 2)
         for i in sorted_indices:
             row = i // len(robots)
             col = i % len(robots)
@@ -67,100 +67,153 @@ class TravelingLinePlanner(Planner):
             H.append((f ** 2 * y_a0 + sqrt((f * y_a0 - f * y_m0) ** 2 + (x_m - x_m0) ** 2 * (f ** 2 - 1)))
                      / (f ** 2 - 1))
 
+        def makespan(h):
+            return sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / fv
+
         def line_trpv(h):
             def time_to_meet(source, target):
                 if source < target:
                     delta_y = target - source
-                    time_to_meet = delta_y / (fv + v)
+                    time_to_meet = delta_y / (fv - v)
                 else:
                     delta_y = source - target
-                    time_to_meet = delta_y / (fv - v)
+                    time_to_meet = delta_y / (fv + v)
                 return time_to_meet
 
-            agents_ys = [a.y for a in agents]
-            A_up = [h] + sorted([a for a in agents_ys if a >= h])
-            A_down = [h] + sorted([a for a in agents_ys if a < h], reverse=True)
+            makespan_time = makespan(h)
+            agents_ys = [a.y + v * makespan_time for a in agents]
+            X = sorted([a for a in agents_ys if a > h])
+            Y = sorted([a for a in agents_ys if a <= h], reverse=True)
 
-            T = {a1: {a2: {'damage': 0, 'ys': []} for a2 in A_up + A_down} for a1 in A_up + A_down}
-            T[h][h] = {'damage': 0, 'ys': [h]}
+            if len(X) == 0:
+                time_to_meets = [time_to_meet(h, y) for y in agents_ys]
+                return {'damage': sum(time_to_meets), 'ys': list(Y), 't': time_to_meets[-1]}
 
-            for i in range(len(A_up)):
-                T[h][A_up[i]] = {'damage': math.inf, 'ys': []}
-                T[A_up[i]][h] = {'damage': time_to_meet(h, A_up[i]) * len(agents), 'ys': [h, A_up[i]]}
+            XY = {x: {y: {'damage': 0, 'ys': [], 't': 0} for y in Y} for x in X}
+            YX = {y: {x: {'damage': 0, 'ys': [], 't': 0} for x in X} for y in Y}
 
-            for i in range(len(A_down)):
-                T[h][A_down[i]] = {'damage': math.inf, 'ys': []}
-                T[A_down[i]][h] = {'damage': time_to_meet(h, A_down[i]) * len(agents), 'ys': [h, A_down[i]]}
+            # fill first row in both tables
+            for i in range(len(Y)):
+                x1 = X[0]
+                yi = Y[i]
+                time_h_yi = time_to_meet(h, yi)
+                time_yi_x1 = time_to_meet(yi, x1)
+                XY[x1][yi]['damage'] = sum([time_to_meet(h, y) for y in Y[:i + 1]]) \
+                                       + time_h_yi + time_yi_x1
+                XY[x1][yi]['ys'] = [yi + v * time_h_yi, x1 + v * (time_h_yi + time_yi_x1)]
+                XY[x1][yi]['t'] = time_h_yi + time_yi_x1
 
-            for i in range(1, max(len(A_up), len(A_down))):
-                for j in range(0, max(len(A_up), len(A_down))):
-                    num_living_agents = len(agents) + 1 - (i + j)
+            for i in range(len(X)):
+                y1 = Y[0]
+                xi = X[i]
+                time_h_xi = time_to_meet(h, xi)
+                time_xi_y1 = time_to_meet(xi, y1)
+                YX[y1][xi]['damage'] = sum([time_to_meet(h, x) for x in X[:i]]) \
+                                       + time_h_xi + time_xi_y1
+                YX[y1][xi]['ys'] = [xi + v * time_h_xi, y1 + v * (time_h_xi + time_xi_y1)]
+                YX[y1][xi]['t'] = time_h_xi + time_xi_y1
 
-                    if i < len(A_up) and j < len(A_down):
-                        time_reaching_from_up = time_to_meet(A_up[i - 1], A_up[i])
-                        time_reaching_from_down = time_to_meet(A_down[j], A_up[i])
+            # fill in diagonals
+            for i in range(len(X) + len(Y) - 2):
+                # top right XY
+                idx_x = max(1, i - len(Y) + 2)
+                idx_y = min(len(Y) - 1, i)
 
-                        damage_reaching_from_up = T[A_up[i - 1]][A_down[j]]['damage'] \
-                                                  + num_living_agents * time_reaching_from_up
-                        damage_reaching_from_down = T[A_down[j]][A_up[i - 1]]['damage'] \
-                                                    + num_living_agents * time_reaching_from_down
+                # fill diagonal XY
+                while idx_x < len(X) and idx_y >= 0:
+                    num_living_agents = len(agents) - (idx_x + idx_y)
 
-                        if damage_reaching_from_up < damage_reaching_from_down:
-                            T[A_up[i]][A_down[j]]['damage'] = damage_reaching_from_up
-                            path_reaching_from_up = T[A_up[i - 1]][A_down[j]]['ys']
-                            T[A_up[i]][A_down[j]]['path'] = path_reaching_from_up + [A_up[i]]
-                        else:
-                            T[A_up[i]][A_down[j]]['damage'] = damage_reaching_from_down
-                            path_reaching_from_down = T[A_down[j]][A_up[i - 1]]['ys']
-                            T[A_up[i]][A_down[j]]['path'] = path_reaching_from_down + [A_up[i]]
+                    cur_x = X[idx_x]
+                    prev_x = X[idx_x - 1]
+                    cur_y = Y[idx_y]
 
-                    if j < len(A_up) and i < len(A_down):
-                        time_reaching_from_up = time_to_meet(A_up[j], A_down[i])
-                        time_reaching_from_down = time_to_meet(A_down[i - 1], A_down[i])
+                    time_reaching_from_up = time_to_meet(prev_x, cur_x)
+                    time_reaching_from_down = time_to_meet(cur_y, cur_x)
 
-                        damage_reaching_from_up = T[A_up[j]][A_down[i - 1]]['damage'] \
-                                                  + num_living_agents * time_reaching_from_up
-                        damage_reaching_from_down = T[A_down[i - 1]][A_up[j]]['damage'] \
-                                                    + num_living_agents * time_reaching_from_down
+                    damage_reaching_from_up = XY[prev_x][cur_y]['damage'] \
+                                              + num_living_agents * time_reaching_from_up
+                    damage_reaching_from_down = YX[cur_y][prev_x]['damage'] \
+                                                + num_living_agents * time_reaching_from_down
 
-                        if damage_reaching_from_up < damage_reaching_from_down:
-                            T[A_down[i]][A_up[j]]['damage'] = damage_reaching_from_up
-                            path_reaching_from_up = T[A_up[j]][A_down[i - 1]]['ys']
-                            T[A_down[i]][A_up[j]]['path'] = path_reaching_from_up + [A_down[i]]
-                        else:
-                            T[A_down[i]][A_up[j]]['damage'] = damage_reaching_from_down
-                            path_reaching_from_down = T[A_down[i - 1]][A_up[j]]['ys']
-                            T[A_down[i]][A_up[j]]['path'] = path_reaching_from_down + [A_down[i]]
+                    if damage_reaching_from_up < damage_reaching_from_down:
+                        XY[cur_x][cur_y]['damage'] = damage_reaching_from_up
+                        XY[cur_x][cur_y]['t'] = XY[prev_x][cur_y]['t'] + time_reaching_from_up
+                        path_reaching_from_up = XY[prev_x][cur_y]['ys']
+                        XY[cur_x][cur_y]['ys'] = path_reaching_from_up + [cur_x + v * XY[cur_x][cur_y]['t']]
+                    else:
+                        XY[cur_x][cur_y]['damage'] = damage_reaching_from_down
+                        XY[cur_x][cur_y]['t'] = YX[cur_y][prev_x]['t'] + damage_reaching_from_down
+                        path_reaching_from_down = YX[cur_y][prev_x]['ys']
+                        XY[cur_x][cur_y]['ys'] = path_reaching_from_down + [cur_x + v * XY[cur_x][cur_y]['t']]
 
-            damage_up, movement_up = T[A_up[-1]][A_down[-1]]['damage'], T[A_up[-1]][A_down[-1]]['ys']
-            damage_down, movement_down = T[A_down[-1]][A_up[-1]]['damage'], T[A_down[-1]][A_up[-1]]['ys']
+                    idx_x += 1
+                    idx_y -= 1
+
+                # top right YX
+                idx_y = max(1, i - len(X) + 2)
+                idx_x = min(len(X) - 1, i)
+
+                # fill diagonal YX
+                while idx_y < len(Y) and idx_x >= 0:
+                    num_living_agents = len(agents) - (idx_x + idx_y)
+
+                    cur_y = Y[idx_y]
+                    prev_y = Y[idx_y - 1]
+                    cur_x = X[idx_x]
+
+                    time_reaching_from_down = time_to_meet(prev_y, cur_y)
+                    time_reaching_from_up = time_to_meet(cur_x, cur_y)
+
+                    damage_reaching_from_down = XY[cur_x][prev_y]['damage'] \
+                                                + num_living_agents * time_reaching_from_down
+                    damage_reaching_from_up = YX[prev_y][cur_x]['damage'] \
+                                              + num_living_agents * time_reaching_from_up
+
+                    if damage_reaching_from_down < damage_reaching_from_up:
+                        YX[cur_y][cur_x]['damage'] = damage_reaching_from_down
+                        YX[cur_y][cur_x]['t'] = YX[prev_y][cur_x]['t'] + time_reaching_from_down
+                        path_reaching_from_up = YX[prev_y][cur_x]['ys']
+                        YX[cur_y][cur_x]['ys'] = path_reaching_from_up + [cur_y + v * YX[cur_y][cur_x]['t']]
+                    else:
+                        YX[cur_y][cur_x]['damage'] = damage_reaching_from_up
+                        YX[cur_y][cur_x]['t'] = XY[cur_x][prev_y]['t'] + time_reaching_from_up
+                        path_reaching_from_up = XY[cur_x][prev_y]['ys']
+                        YX[cur_y][cur_x]['ys'] = path_reaching_from_up + [cur_y + v * YX[cur_y][cur_x]['t']]
+
+                    idx_y += 1
+                    idx_x -= 1
+
+            damage_up = XY[X[-1]][Y[-1]]['damage']
+            damage_down = YX[Y[-1]][X[-1]]['damage']
+
             if damage_up < damage_down:
-                return damage_up, movement_up
-            return damage_down, movement_down
+                return XY[X[-1]][Y[-1]]
+            return YX[Y[-1]][X[-1]]
 
-        h_scores_movements = {h: line_trpv(h) for h in H}
-
-        def t_max(h):
-            return sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / fv
+        h_trpv = {h: line_trpv(h) for h in H}
 
         def damage_score(h):
-            score, _ = line_trpv(h)
-            return score + (len(agents) * t_max(h)) / fv
+            score = h_trpv[h]['damage']
+            return score + (len(agents) * makespan(h)) / fv
 
-        h_opt = min(H, key= lambda h:h_scores_movements[h][0])
+        h_opt = min(H, key=damage_score)
 
+        # refine optimal ys
+        optimal_y = [h_opt] + h_trpv[h_opt]['ys'] + [Y_SIZE]
+
+        refined_optimal_y = []
+        for j in range(len(optimal_y)):
+            if 0 < j < len(optimal_y) - 1 and optimal_y[j - 1] < optimal_y[j] < optimal_y[j + 1]:
+                continue
+            refined_optimal_y.append(optimal_y[j])
+
+        # add trp movement
         for i in range(len(optimal_assignment[0])):
             assigned_robot = robots[optimal_assignment[0][i]]
-            movement[assigned_robot].append(Point(optimal_x[assigned_robot], h_opt))
-
-        trp_ys = h_scores_movements[h_opt][1]
-        for i in range(len(optimal_assignment[0])):
-            assigned_robot = robots[optimal_assignment[0][i]]
-            for y in trp_ys:
+            for y in refined_optimal_y:
                 movement[assigned_robot].append(Point(optimal_x[assigned_robot], y))
 
-        for robot in robots:
-            robot.set_movement(movement[robot])
+        return movement, h_trpv[h_opt]['t']
 
     def __str__(self):
-        return 'StaticLinePlanner'
+        return 'TravelingLinePlanner'

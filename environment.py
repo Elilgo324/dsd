@@ -1,9 +1,8 @@
-from typing import List, Tuple
+from copy import deepcopy
+from typing import List, Tuple, Union
 
 from agents.base_agent import BaseAgent
 from robots.basic_robot import BasicRobot
-from utils.consts import Consts
-from copy import deepcopy
 
 
 class Environment:
@@ -32,6 +31,18 @@ class Environment:
     def step(self) -> int:
         return self._step
 
+    @property
+    def acc_damage(self) -> float:
+        return self._acc_damage
+
+    @property
+    def agents_disabled(self) -> float:
+        return self._agents_disabled
+
+    @property
+    def agents_escaped(self) -> float:
+        return self._agents_escaped
+
     def clone_robots(self) -> List[BasicRobot]:
         return deepcopy(self._robots)
 
@@ -42,13 +53,10 @@ class Environment:
         return self.robots[i]
 
     def advance(self) -> bool:
-        self._step += 1
+        if self._step % 10 == 0:
+            print(f'step {self._step}')
 
-        if Consts.DEBUG:
-            print(f'*** step: {self._step} ***')
-            print(f'#robots: {len(self.robots)}')
-            print(f'#agents: {len(self.agents)}')
-            print(f'acc damage: {self._acc_damage}')
+        self._step += 1
 
         for robot in self.robots:
             robot.advance()
@@ -60,17 +68,18 @@ class Environment:
         # check disablement and escaped
         for agent in self.agents:
             for robot in self.robots:
-                if agent.loc.distance_to(robot.loc) <= robot.r + 0.1:
+                # the differences between the velocities can cause the robot
+                # to jump over the agent without disabling it
+                # thus the 1.5 factor which is greater than sqrt(2 range^2)
+                if agent.loc.distance_to(robot.loc) <= 1.5 * robot.r:
                     self.agents.remove(agent)
                     self._agents_disabled += 1
-                    if Consts.DEBUG:
-                        print('agent disabled')
+                    print('agent disabled')
                     break
                 if agent.y > self._world_size[1]:
                     self.agents.remove(agent)
                     self._agents_escaped += 1
-                    if Consts.DEBUG:
-                        print('agent escaped')
+                    print('agent escaped')
                     break
 
         return len(self.agents) == 0

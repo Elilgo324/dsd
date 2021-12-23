@@ -1,17 +1,13 @@
-import random
-from typing import Dict, List
+from typing import Dict, Tuple
 
 from scipy.optimize import linear_sum_assignment
 
-from agents.base_agent import BaseAgent
 from planners.planner import Planner
-from robots.basic_robot import BasicRobot
-from environment import Environment
 from utils.functions import *
 
 
 class OnlineChasingPlanner(Planner):
-    def plan(self, env: Environment) -> None:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float]:
         robots = env.robots
         agents = env.agents
 
@@ -26,8 +22,7 @@ class OnlineChasingPlanner(Planner):
         for i in range(len(optimal_assignment[0])):
             movement[robots[optimal_assignment[0][i]]].append(agents[optimal_assignment[1][i]])
 
-        for robot in robots:
-            robot.set_movement(movement[robot])
+        return movement, -1
 
     def __str__(self):
         return 'OnlineChasingPlanner'

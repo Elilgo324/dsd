@@ -1,3 +1,5 @@
+from typing import Tuple, Dict
+
 from scipy.optimize import linear_sum_assignment
 
 from planners.planner import Planner
@@ -5,7 +7,7 @@ from utils.functions import *
 
 
 class OfflineChasingPlanner(Planner):
-    def plan(self, env: Environment) -> None:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float]:
         robots = env.robots
         agents = env.agents
 
@@ -24,8 +26,7 @@ class OfflineChasingPlanner(Planner):
             movement[robots[optimal_assignment[0][i]]].append(assigned_agent.loc)
             movement[robots[optimal_assignment[0][i]]].append(Point(assigned_agent.x, Y_SIZE))
 
-        for robot in robots:
-            robot.set_movement(movement[robot])
+        return movement, -1
 
     def __str__(self):
         return 'OfflineChasingPlanner'

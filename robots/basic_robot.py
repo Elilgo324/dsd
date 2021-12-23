@@ -37,7 +37,6 @@ class BasicRobot:
 
     def advance(self) -> None:
         if self._movement:
-            prev_loc = self.loc
             target = self._movement[0]
             direction = self.loc.direction_with(target)
 
@@ -46,9 +45,6 @@ class BasicRobot:
             else:
                 self._loc = self._movement[0]
                 self._movement.pop(0)
-
-            if Consts.DEBUG:
-                print(f'{str(self)}: {prev_loc} -> {self.loc}')
 
     def clone(self) -> 'BasicRobot':
         return deepcopy(self)

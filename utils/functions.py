@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 from agents.base_agent import BaseAgent
 from environment import Environment
 from robots.basic_robot import BasicRobot
-from utils.consts import Consts
 from utils.point import Point
 
 
@@ -17,9 +16,9 @@ def sample_point(x_min: float, x_max: float, y_min: float, y_max: float) -> Poin
     return Point(uniform(x_min, x_max), uniform(y_min, y_max))
 
 
-def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent], env: Environment) -> None:
-    buffer = 10
-    X_SIZE,Y_SIZE = env.world_size
+def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent], env: Environment, config) -> None:
+    buffer = config['buffer']
+    X_SIZE, Y_SIZE = config['x_size'], config['y_size']
     plt.clf()
     plt.xlim(-buffer, X_SIZE + buffer)
     plt.ylim(-buffer, Y_SIZE + buffer)
@@ -45,5 +44,35 @@ def create_gif_from_plots(prefix=''):
         os.remove('./plots/' + filename + '.png')
 
 
-def write_report():
-    pass
+def write_report(planner: str, config, env: Environment, completion_time: float, planning_time: float):
+    # planner
+    planner = planner
+
+    # settings
+    num_agents = config['num_agents']
+    num_robots = len(env.robots)
+    f = config['robot_speed'] / config['agent_speed']
+
+    # times
+    overall_time = env.step
+    completion_time = completion_time
+    planner_time = planning_time
+
+    # disablement
+    damage = env.acc_damage
+    num_disabled = env.agents_disabled
+    num_escaped = env.agents_escaped
+
+    stats = [planner, num_agents, num_robots, f, overall_time, completion_time, planner_time, damage,
+             num_disabled, num_escaped]
+
+    file_name = 'results.csv'
+    if not os.path.exists(file_name):
+        file = open('results.csv', 'a+')
+        file.write('planner,num_agents,num_robots,f,overall_time,completion_time,planner_time,damage,'
+                   'num_disabled,num_escaped\n')
+    else:
+        file = open('results.csv', 'a+')
+
+    file.write(",".join([str(s) for s in stats]))
+    file.write('\n')
