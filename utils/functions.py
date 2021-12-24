@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from math import sqrt
 from random import uniform
 from typing import List
 
@@ -8,21 +9,38 @@ import matplotlib.pyplot as plt
 
 from agents.base_agent import BaseAgent
 from environment import Environment
-from robots.basic_robot import BasicRobot
 from utils.point import Point
+from robots.basic_robot import BasicRobot
 
 
 def sample_point(x_min: float, x_max: float, y_min: float, y_max: float) -> Point:
     return Point(uniform(x_min, x_max), uniform(y_min, y_max))
 
 
+def meeting_height(robot: BasicRobot, agent: BaseAgent) -> float:
+    f = robot.fv / agent.v
+    a, b = robot.x, robot.y
+    c, d = agent.x, agent.y
+    inside_sqrt = a ** 2 * f ** 2 - a ** 2 - 2 * a * c * f ** 2 + 2 * a * c \
+                  + b ** 2 * f ** 2 - 2 * b * d * f ** 2 + c ** 2 * f ** 2 - c ** 2 + d ** 2 * f ** 2
+    num = sqrt(inside_sqrt) - b + d * f ** 2
+    den = f ** 2 - 1
+    h = num / den
+
+    if h < agent.y:
+        raise ValueError('meeting height cannot be lower than agent')
+
+    return h
+
+
 def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent], env: Environment, config) -> None:
-    buffer = config['buffer']
-    X_SIZE, Y_SIZE = config['x_size'], config['y_size']
     plt.clf()
-    plt.xlim(-buffer, X_SIZE + buffer)
-    plt.ylim(-buffer, Y_SIZE + buffer)
-    plt.plot([0, 0, X_SIZE, X_SIZE, 0], [0, Y_SIZE, Y_SIZE, 0, 0], c='black')
+    plt.xlim(0, config['x_size'] + 2 * config['x_buffer'])
+    plt.ylim(0, config['y_size'] + 2 * config['y_buffer'])
+    plt.plot([config['x_buffer'], config['x_buffer'], config['x_buffer'] + config['x_size'], config['x_buffer'] +
+              config['x_size'], config['x_buffer']],
+             [config['y_buffer'], config['y_buffer'] + config['y_size'], config['y_buffer'] + config['y_size'],
+              config['y_buffer'], config['y_buffer']], c='black')
     plt.scatter([r.x for r in robots], [r.y for r in robots], c='blue')
     for i in range(len(robots)):
         plt.annotate(i, (robots[i].x, robots[i].y))

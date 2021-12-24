@@ -1,6 +1,4 @@
 import operator
-from math import ceil
-from math import sqrt
 from typing import Tuple, Dict
 
 from scipy.optimize import linear_sum_assignment
@@ -15,20 +13,20 @@ class StaticLinePlanner(Planner):
         agents = env.agents
         movement = {robot: [] for robot in robots}
 
-        _, Y_SIZE = env.world_size
-        d = robots[0].r
+        b = env.border
         v = agents[0].v
         fv = robots[0].fv
         f = fv / v
 
         x_min_a = min(a.x for a in agents)
         x_max_a = max(a.x for a in agents)
+        actual_range = (x_max_a - x_min_a) / len(robots)
         y_max_r = max(r.y for r in robots)
-        num_robots_on_block = ceil((x_max_a - x_min_a) / (2 * d))
 
         # optimal assignment on bottom line
-        locations = [Point(x_min_a + d + 2 * d * i, y_max_r) for i in range(num_robots_on_block)]
+        locations = [Point(x_min_a + actual_range * (i + 0.5), y_max_r) for i in range(len(robots))]
 
+        # hungarian algorithm minimizing makespan
         distances = [[] for _ in range(len(robots))]
         for i in range(len(robots)):
             distances[i] = [robots[i].loc.distance_to(locations[j]) for j in range(len(locations))]
@@ -76,25 +74,21 @@ class StaticLinePlanner(Planner):
                 damage += max(h - y_a0, 0)
             for i in escaping_agents(h):
                 y_a0 = agents[i].y
-                damage += min(Y_SIZE - h, Y_SIZE - y_a0)
+                damage += min(b - h, b - y_a0)
             return damage
 
-        H = []
-        for a in agents:
-            y_a0 = a.y
-            H.append((f ** 2 * y_a0 + sqrt((f * y_a0 - f * y_m0) ** 2 + (x_m - x_m0) ** 2 * (f ** 2 - 1)))
-                     / (f ** 2 - 1))
+        # potential lines
+        H = [meeting_height(farthest_robot, BaseAgent(Point(x_m, agent.y), agent.v)) for agent in agents]
 
+        # assign on h opt
         h_opt = min(H, key=damage_score)
 
         for i in range(len(optimal_assignment[0])):
             assigned_robot = robots[optimal_assignment[0][i]]
             movement[assigned_robot].append(Point(optimal_x[assigned_robot], h_opt))
 
-        def makespan(h):
-            return sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / fv
-
-        return movement, makespan(h_opt)
+        makespan = farthest_robot.loc.distance_to(movement[farthest_robot][0]) / fv
+        return movement, makespan
 
     def __str__(self):
         return 'StaticLinePlanner'

@@ -11,7 +11,7 @@ class OfflineChasingPlanner(Planner):
         robots = env.robots
         agents = env.agents
 
-        _, Y_SIZE = env.world_size
+        _, Y_SIZE = env.border
 
         distances = [[] for _ in range(len(robots))]
         for i in range(len(robots)):

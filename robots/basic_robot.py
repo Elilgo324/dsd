@@ -1,7 +1,6 @@
 from copy import deepcopy
 from typing import List
 
-from utils.consts import Consts
 from utils.point import Point
 
 
@@ -36,13 +35,17 @@ class BasicRobot:
         self._movement = movement
 
     def advance(self) -> None:
-        if self._movement:
+        remain_dist = self.fv
+
+        while self._movement:
             target = self._movement[0]
             direction = self.loc.direction_with(target)
 
-            if self._loc.distance_to(target) > self.fv:
-                self._loc = self.loc.shifted(distance=self.fv, bearing=direction)
+            if self._loc.distance_to(target) > remain_dist:
+                self._loc = self.loc.shifted(distance=remain_dist, bearing=direction)
+                break
             else:
+                remain_dist -= self._loc.distance_to(self._movement[0])
                 self._loc = self._movement[0]
                 self._movement.pop(0)
 

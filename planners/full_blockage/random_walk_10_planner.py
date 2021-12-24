@@ -11,7 +11,7 @@ class RandomWalk10Planner(Planner):
 
         movement = {robot: [] for robot in robots}
 
-        x_max, y_max = env.world_size
+        x_max, y_max = env.border
 
         for _ in range(10):
             for robot in robots:

@@ -3,9 +3,8 @@ import time
 from math import ceil
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
-from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
+from planners.full_blockage.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.planner import Planner
-from robots.waiting_robot import WaitingRobot
 from utils.functions import *
 
 with open('config.json') as json_file:
@@ -19,10 +18,10 @@ def run(planner: Planner):
 
     x_min = min([a.x for a in agents])
     x_max = max([a.x for a in agents])
-    num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
 
-    robots = [WaitingRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                           config['robot_speed'], config['disablement_range'])
+    num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
+    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
+                         config['robot_speed'], config['disablement_range'])
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
@@ -31,10 +30,8 @@ def run(planner: Planner):
     movement, completion_time = planner.plan(env)
     planning_time = time.time() - before
 
-    makespan_time = max([movement[r][0].distance_to(r.loc) / config['robot_speed'] for r in robots])
     for r in robots:
         r.set_movement(movement[r])
-        r.set_wait_time(makespan_time)
 
     is_finished = False
     while not is_finished:
@@ -51,7 +48,7 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [TravelingLinePlanner() for _ in range(1)]
+    planners = [IterativeAssignmentPlanner() for _ in range(1)]
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)

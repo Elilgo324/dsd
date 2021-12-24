@@ -1,11 +1,10 @@
 import operator
-from math import ceil
-from math import sqrt
 from typing import Dict, Tuple
 
 from scipy.optimize import linear_sum_assignment
 
 from planners.planner import Planner
+from utils.consts import Consts
 from utils.functions import *
 
 
@@ -15,19 +14,17 @@ class TravelingLinePlanner(Planner):
         agents = env.agents
         movement = {robot: [] for robot in robots}
 
-        _, Y_SIZE = env.world_size
-        d = robots[0].r
+        b = env.border
         v = agents[0].v
         fv = robots[0].fv
-        f = fv / v
 
         x_min_a = min(a.x for a in agents)
         x_max_a = max(a.x for a in agents)
+        actual_range = (x_max_a - x_min_a) / len(robots)
         y_max_r = max(r.y for r in robots)
-        num_robots_on_block = ceil((x_max_a - x_min_a) / (2 * d))
 
         # optimal assignment on bottom line
-        locations = [Point(x_min_a + d + 2 * d * i, y_max_r) for i in range(num_robots_on_block)]
+        locations = [Point(x_min_a + actual_range * (i + 0.5), y_max_r) for i in range(len(robots))]
 
         distances = [[] for _ in range(len(robots))]
         for i in range(len(robots)):
@@ -61,11 +58,8 @@ class TravelingLinePlanner(Planner):
         y_m0 = farthest_robot.y
         x_m = optimal_x[farthest_robot]
 
-        H = []
-        for a in agents:
-            y_a0 = a.y
-            H.append((f ** 2 * y_a0 + sqrt((f * y_a0 - f * y_m0) ** 2 + (x_m - x_m0) ** 2 * (f ** 2 - 1)))
-                     / (f ** 2 - 1))
+        # potential lines
+        H = [meeting_height(farthest_robot, BaseAgent(Point(x_m, agent.y), agent.v)) for agent in agents]
 
         def makespan(h):
             return sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / fv
@@ -82,8 +76,8 @@ class TravelingLinePlanner(Planner):
 
             makespan_time = makespan(h)
             agents_ys = [a.y + v * makespan_time for a in agents]
-            X = sorted([a for a in agents_ys if a > h])
-            Y = sorted([a for a in agents_ys if a <= h], reverse=True)
+            X = sorted([a for a in agents_ys if a > h + Consts.EPSILON])
+            Y = sorted([a for a in agents_ys if a < h + Consts.EPSILON], reverse=True)
 
             if len(X) == 0:
                 time_to_meets = [time_to_meet(h, y) for y in agents_ys]
@@ -199,7 +193,7 @@ class TravelingLinePlanner(Planner):
         h_opt = min(H, key=damage_score)
 
         # refine optimal ys
-        optimal_y = [h_opt] + h_trpv[h_opt]['ys'] + [Y_SIZE]
+        optimal_y = [h_opt] + h_trpv[h_opt]['ys'] + [b]
 
         refined_optimal_y = []
         for j in range(len(optimal_y)):

@@ -1,8 +1,9 @@
 {
-  "x_size": 50,
+  "x_size": 25,
   "y_size_init": 50,
   "y_size": 100,
-  "buffer": 25,
+  "x_buffer": 25,
+  "y_buffer": 10,
   "num_agents": 50,
   "agent_speed": 1,
   "robot_speed": 2,

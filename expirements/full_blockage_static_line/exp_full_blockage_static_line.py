@@ -12,18 +12,19 @@ with open('config.json') as json_file:
 
 
 def run(planner: Planner):
-    agents = [FixedVelocityAgent(sample_point(0, config['x_size'], 0.2 * config['y_size_init'], config['y_size_init']),
+    agents = [FixedVelocityAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
+                                              config['y_buffer'], config['y_buffer'] + config['y_size_init']),
                                  config['agent_speed']) for _ in range(config['num_agents'])]
 
-    y_min = min([a.y for a in agents])
     x_min = min([a.x for a in agents])
     x_max = max([a.x for a in agents])
+
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
-    robots = [BasicRobot(sample_point(-config['buffer'], config['x_size'] + config['buffer'], 0, y_min),
+    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
                          config['robot_speed'], config['disablement_range'])
               for _ in range(num_robots_for_full_blockage)]
 
-    env = Environment(agents=agents, robots=robots, world_size=(config['x_size'], config['y_size']))
+    env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
     before = time.time()
     movement, completion_time = planner.plan(env)
@@ -48,7 +49,7 @@ def run(planner: Planner):
 
 if __name__ == '__main__':
     # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
-    planners = [StaticLinePlanner() for _ in range(5)]
+    planners = [StaticLinePlanner() for _ in range(1)]
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)

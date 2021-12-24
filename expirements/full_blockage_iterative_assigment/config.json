@@ -1,7 +1,7 @@
 {
   "x_size": 25,
   "y_size_init": 50,
-  "y_size": 200,
+  "y_size": 300,
   "x_buffer": 25,
   "y_buffer": 10,
   "num_agents": 50,
