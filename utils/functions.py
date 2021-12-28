@@ -62,33 +62,21 @@ def create_gif_from_plots(prefix=''):
         os.remove('./plots/' + filename + '.png')
 
 
-def write_report(planner: str, config, env: Environment, completion_time: float, planning_time: float):
-    # planner
-    planner = planner
-
-    # settings
-    num_agents = config['num_agents']
-    num_robots = len(env.robots)
-    f = config['robot_speed'] / config['agent_speed']
-
-    # times
-    overall_time = env.step
-    completion_time = completion_time
-    planner_time = planning_time
-
-    # disablement
-    damage = env.acc_damage
-    num_disabled = env.agents_disabled
-    num_escaped = env.agents_escaped
-
-    stats = [planner, num_agents, num_robots, f, overall_time, completion_time, planner_time, damage,
-             num_disabled, num_escaped]
+def write_report(planner: str,
+                 num_agents: int,
+                 num_robots: int,
+                 f: float,
+                 active_time: float,
+                 planner_time: float,
+                 damage: float,
+                 num_disabled: int) -> None:
+    stats = [planner, num_agents, num_robots, f, active_time, planner_time, damage, num_disabled]
 
     file_name = 'results.csv'
     if not os.path.exists(file_name):
         file = open('results.csv', 'a+')
-        file.write('planner,num_agents,num_robots,f,overall_time,completion_time,planner_time,damage,'
-                   'num_disabled,num_escaped\n')
+        file.write('planner,num_agents,num_robots,f,active_time,planner_time,damage,'
+                   'num_disabled\n')
     else:
         file = open('results.csv', 'a+')
 

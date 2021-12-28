@@ -8,7 +8,7 @@ from utils.functions import *
 
 
 class StaticLinePlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = env.agents
         movement = {robot: [] for robot in robots}
@@ -59,6 +59,9 @@ class StaticLinePlanner(Planner):
         y_m0 = farthest_robot.y
         x_m = optimal_x[farthest_robot]
 
+        # potential lines
+        H = [meeting_height(farthest_robot, BaseAgent(Point(x_m, agent.y), agent.v)) for agent in agents]
+
         def escaping_agents(h):
             i_escaping = []
             for i in range(len(agents)):
@@ -66,6 +69,8 @@ class StaticLinePlanner(Planner):
                 if y_a0 > h - sqrt((x_m - x_m0) ** 2 + (h - y_m0) ** 2) / f:
                     i_escaping.append(i)
             return i_escaping
+
+        hs_escaping_agents = {h: escaping_agents(h) for h in H}
 
         def damage_score(h):
             damage = 0
@@ -77,18 +82,17 @@ class StaticLinePlanner(Planner):
                 damage += min(b - h, b - y_a0)
             return damage
 
-        # potential lines
-        H = [meeting_height(farthest_robot, BaseAgent(Point(x_m, agent.y), agent.v)) for agent in agents]
+        hs_damage_scores = {h: damage_score(h) for h in H}
 
-        # assign on h opt
-        h_opt = min(H, key=damage_score)
+        # assign robots on h opt
+        h_opt = min(H, key=lambda h : hs_damage_scores[h])
 
         for i in range(len(optimal_assignment[0])):
             assigned_robot = robots[optimal_assignment[0][i]]
             movement[assigned_robot].append(Point(optimal_x[assigned_robot], h_opt))
 
         makespan = farthest_robot.loc.distance_to(movement[farthest_robot][0]) / fv
-        return movement, makespan
+        return movement, makespan, hs_damage_scores[h_opt], len(hs_escaping_agents[h_opt])
 
     def __str__(self):
         return 'StaticLinePlanner'

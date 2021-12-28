@@ -58,9 +58,26 @@ class Environment:
 
         self._step += 1
 
+        for robot in self.robots:
+            robot.advance()
+
+        for agent in self.agents:
+            agent.advance()
+            self._acc_damage += agent.v
+
         # check disablement and escaped
         for agent in self.agents:
+            if agent.y > self._border:
+                self.agents.remove(agent)
+                self._agents_escaped += 1
+                print('agent escaped')
+                break
+
             for robot in self.robots:
+                # if robot does not disable
+                if not robot.is_disabling:
+                    continue
+
                 # the differences between the velocities can cause the robot
                 # to jump over the agent without disabling it
                 # thus the 1.5 factor which is greater than sqrt(2 range^2)
@@ -69,18 +86,6 @@ class Environment:
                     self._agents_disabled += 1
                     print('agent disabled')
                     break
-                if agent.y > self._border:
-                    self.agents.remove(agent)
-                    self._agents_escaped += 1
-                    print('agent escaped')
-                    break
-
-        for robot in self.robots:
-            robot.advance()
-
-        for agent in self.agents:
-            agent.advance()
-            self._acc_damage += agent.v
 
         return len(self.agents) == 0
 

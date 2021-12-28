@@ -1,5 +1,4 @@
 import json
-import time
 from math import ceil
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
@@ -21,14 +20,12 @@ def run(planner: Planner):
 
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'])
+                         config['robot_speed'], config['disablement_range'], True)
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
-    before = time.time()
-    movement, completion_time = planner.plan(env)
-    planning_time = time.time() - before
+    movement, _, _, _ = planner.plan(env)
 
     for r in robots:
         r.set_movement(movement[r])
@@ -40,8 +37,6 @@ def run(planner: Planner):
     plot_environment(robots, agents, env, config)
 
     create_gif_from_plots(prefix=str(planner))
-    write_report(planner=str(planner), config=config, env=env, completion_time=completion_time,
-                 planning_time=planning_time)
 
     print(f'*** results of {str(planner)} ***')
     print(env.stats())

@@ -7,20 +7,26 @@ from utils.functions import *
 
 
 class IterativeAssignmentPlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents_copy = [a.clone() for a in env.agents]
         movement = {robot: [] for robot in robots}
         free_time = {robot: 0 for robot in robots}
+        expected_damage = 0
+        expected_num_disabled = 0
 
         while len(agents_copy) > 0:
             distances = [[] for _ in range(len(robots))]
             for i in range(len(robots)):
                 for a in agents_copy:
+                    robot_at_time = robots[i].clone()
+                    if len(movement[robots[i]]) > 0:
+                        robot_at_time.loc = movement[robots[i]][-1]
+
                     x_meeting = a.x
                     agent_at_time = BaseAgent(Point(a.x, a.y + free_time[robots[i]] * a.v), a.v)
-                    y_meeting = meeting_height(robots[i], agent_at_time)
-                    distances[i].append(robots[i].loc.distance_to(Point(x_meeting, y_meeting)))
+                    y_meeting = meeting_height(robot_at_time, agent_at_time)
+                    distances[i].append(robot_at_time.loc.distance_to(Point(x_meeting, y_meeting)))
 
             optimal_assignment = linear_sum_assignment(distances)
             assigned_robots = optimal_assignment[0]
@@ -29,6 +35,9 @@ class IterativeAssignmentPlanner(Planner):
             for i in range(len(assigned_robots)):
                 assigned_robot = robots[assigned_robots[i]]
                 assigned_agent = agents_copy[assigned_agents[i]]
+
+                expected_damage += free_time[assigned_robot]
+                expected_num_disabled += 1
 
                 prev_loc = assigned_robot.loc
                 if len(movement[assigned_robot]) > 0:
@@ -45,11 +54,11 @@ class IterativeAssignmentPlanner(Planner):
             for a in agents_to_remove:
                 agents_copy.remove(a)
 
-        for r in robots:
-            if len(movement[r]) > 0:
-                movement[r].append(Point(movement[r][-1].x, env.border))
+        # for r in robots:
+        #     if len(movement[r]) > 0:
+        #         movement[r].append(Point(movement[r][-1].x, env.border))
 
-        return movement, max(free_time.values())
+        return movement, max(free_time.values()), expected_damage, expected_num_disabled
 
     def __str__(self):
         return 'IterativeAssignmentPlanner'
