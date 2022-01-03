@@ -1,6 +1,7 @@
 import json
 import time
 from math import ceil
+from random import seed
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.full_blockage.static_line_planner import StaticLinePlanner
@@ -41,7 +42,10 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StaticLinePlanner() for _ in range(1)]
-    for planner in planners:
-        print(f'running {str(planner)} ..')
-        run(planner)
+    seed(42)
+    planners = [StaticLinePlanner() for _ in range(20)]
+    for i in range(20):
+        for _ in range(3):
+            config['num_agents'] = 50 * (i + 1)
+            print(f'running {str(planners[i])} ..')
+            run(planners[i])

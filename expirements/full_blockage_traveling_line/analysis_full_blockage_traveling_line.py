@@ -1,6 +1,7 @@
 import json
 import time
 from math import ceil
+from random import seed
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
@@ -21,7 +22,7 @@ def run(planner: Planner):
 
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], True)
+                         config['robot_speed'], config['disablement_range'], has_mode=True)
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
@@ -41,7 +42,10 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
+    seed(42)
     planners = [TravelingLinePlanner() for _ in range(1)]
-    for planner in planners:
-        print(f'running {str(planner)} ..')
-        run(planner)
+    for i in range(1):
+        for _ in range(3):
+            config['num_agents'] = 10
+            print(f'running {str(planners[i])} ..')
+            run(planners[i])

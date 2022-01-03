@@ -31,19 +31,8 @@ class StaticLinePlanner(Planner):
         for i in range(len(robots)):
             distances[i] = [robots[i].loc.distance_to(locations[j]) for j in range(len(locations))]
 
-        # map into pows of 2
-        enumerate_object = enumerate([item for sublist in distances for item in sublist])
-        sorted_pairs = sorted(enumerate_object, key=operator.itemgetter(1))
-        sorted_indices = [index for index, element in sorted_pairs]
-
-        pows = 2 ** -10
-        for i in sorted_indices:
-            row = i // len(robots)
-            col = i % len(robots)
-            distances[row][col] = pows
-            pows *= 2
-
-        optimal_assignment = linear_sum_assignment(distances)
+        modified_distances = map_into_2_pows(distances)
+        optimal_assignment = linear_sum_assignment(modified_distances)
 
         # optimal final x values
         optimal_x = {robots[optimal_assignment[0][i]]: locations[optimal_assignment[1][i]].x for i in range(len(

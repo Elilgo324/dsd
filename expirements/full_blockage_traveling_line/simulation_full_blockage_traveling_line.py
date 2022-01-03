@@ -20,7 +20,7 @@ def run(planner: Planner):
 
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], False)
+                         config['robot_speed'], config['disablement_range'], True)
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
