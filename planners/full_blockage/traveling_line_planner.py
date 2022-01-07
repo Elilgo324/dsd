@@ -27,9 +27,7 @@ class TravelingLinePlanner(Planner):
         distances = [[] for _ in range(len(robots))]
         for i in range(len(robots)):
             distances[i] = [robots[i].loc.distance_to(locations[j]) for j in range(len(locations))]
-
-        modified_distances = map_into_2_pows(distances)
-        optimal_assignment = linear_sum_assignment(modified_distances)
+        optimal_assignment = linear_sum_assignment(map_into_2_pows(distances))
 
         # optimal final x values
         optimal_x = {robots[optimal_assignment[0][i]]: locations[optimal_assignment[1][i]].x for i in range(len(
@@ -38,13 +36,12 @@ class TravelingLinePlanner(Planner):
         # farthest robot
         chosen_distances = [distances[optimal_assignment[0][i]][optimal_assignment[1][i]] for i in
                             range(len(optimal_assignment[0]))]
-        i_farthest_robot = max(optimal_assignment[0], key=lambda i: chosen_distances[i])
-        farthest_robot = robots[i_farthest_robot]
-        x_m = optimal_x[farthest_robot]
+        farthest_robot = robots[max(optimal_assignment[0], key=lambda i: chosen_distances[i])]
+        farthest_x = optimal_x[farthest_robot]
 
         # potential lines
-        H = [meeting_height(farthest_robot, BaseAgent(Point(x_m, agent.y), agent.v)) for agent in agents]
-        h_makespan = {h: farthest_robot.loc.distance_to(Point(x_m, h)) for h in H}
+        H = [meeting_height(farthest_robot, BaseAgent(Point(farthest_x, agent.y), agent.v)) for agent in agents]
+        h_makespan = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
         h_trpv = {h: line_trpv(h, fv, agents, h_makespan[h]) for h in H}
 
         def damage_score(h):
@@ -63,7 +60,10 @@ class TravelingLinePlanner(Planner):
             for y in optimal_y:
                 movement[assigned_robot].append(Point(optimal_x[assigned_robot], y))
 
-        return movement, h_trpv[h_opt]['t'] + h_makespan[h_opt], hs_damage_scores[h_opt], len(optimal_y)
+        return movement, \
+               h_trpv[h_opt]['t'] + h_makespan[h_opt], \
+               hs_damage_scores[h_opt], \
+               len(optimal_y)
 
     def __str__(self):
         return 'TravelingLinePlanner'

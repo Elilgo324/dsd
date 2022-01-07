@@ -1,7 +1,5 @@
-import math
 import operator
 import os
-import sys
 from datetime import datetime
 from math import sqrt, floor
 from random import uniform
@@ -9,6 +7,7 @@ from typing import List
 
 import imageio as imageio
 import matplotlib.pyplot as plt
+from scipy.optimize import linear_sum_assignment
 
 from agents.base_agent import BaseAgent
 from environment import Environment
@@ -70,22 +69,30 @@ def write_report(planner: str,
                  num_agents: int,
                  num_robots: int,
                  f: float,
+                 d: float,
                  active_time: float,
                  planner_time: float,
                  damage: float,
-                 num_disabled: int) -> None:
-    stats = [planner, num_agents, num_robots, f, active_time, planner_time, damage, num_disabled]
+                 num_disabled: int,
+                 file_name: str = 'results.csv') -> None:
+    stats = [planner, num_agents, num_robots, f, d, active_time, planner_time, damage, num_disabled]
 
-    file_name = 'results.csv'
     if not os.path.exists(file_name):
-        file = open('results.csv', 'a+')
-        file.write('planner,num_agents,num_robots,f,active_time,planner_time,damage,'
+        file = open(file_name, 'a+')
+        file.write('planner,num_agents,num_robots,f,d,active_time,planner_time,damage,'
                    'num_disabled\n')
     else:
-        file = open('results.csv', 'a+')
+        file = open(file_name, 'a+')
 
     file.write(",".join([str(s) for s in stats]))
     file.write('\n')
+
+
+def refine_movement(movement):
+    for i in range(len(movement)):
+        if 0 < i < len(movement) - 1 and step.y[i - 1] < step.y[i] < step.y[j + 1]:
+            continue
+    return movement
 
 
 def map_into_2_pows(costs) -> List[List[float]]:
@@ -96,7 +103,7 @@ def map_into_2_pows(costs) -> List[List[float]]:
     sorted_pairs = sorted(enumerate_object, key=operator.itemgetter(1))
     sorted_indices = [index for index, element in sorted_pairs]
 
-    pows = sys.float_info.min
+    pows = 2 ** -int((rows_num * cols_num) / 2)
     for i in sorted_indices:
         row = floor(i / cols_num)
         col = i % cols_num
@@ -120,14 +127,21 @@ def line_trpv(h, fv, agents, makespan):
     X = sorted([a for a in agents_ys if a > h + Consts.EPSILON])
     Y = sorted([a for a in agents_ys if a < h - Consts.EPSILON], reverse=True)
 
+    time_to_meet_h = {a: time_to_meet(h, a) for a in agents_ys}
+
     # trivial solution if no agents above or below
+    if len(X) == 0 and len(Y) == 0:
+        return {'damage': 0, 'ys': [], 't': 0}
+
     if len(X) == 0:
-        time_to_meets = [time_to_meet(h, y) for y in agents_ys]
-        return {'damage': sum(time_to_meets), 'ys': list(Y), 't': time_to_meets[-1]}
+        return {'damage': sum([time_to_meet_h[a] for a in X + Y]),
+                'ys': [a + v * time_to_meet_h[a] for a in X + Y],
+                't': time_to_meet_h[Y[-1]]}
 
     if len(Y) == 0:
-        time_to_meets = [time_to_meet(h, y) for y in agents_ys]
-        return {'damage': sum(time_to_meets), 'ys': list(X), 't': time_to_meets[-1]}
+        return {'damage': sum([time_to_meet_h[a] for a in X + Y]),
+                'ys': [a + v * time_to_meet_h[a] for a in X + Y],
+                't': time_to_meet_h[X[-1]]}
 
     # tables for the state of (x,y) and (y,x) for each x and y
     XY = {x: {y: {'damage': 0, 'ys': [], 't': 0} for y in Y} for x in X}
@@ -139,9 +153,9 @@ def line_trpv(h, fv, agents, makespan):
         yi = Y[i]
         time_h_yi = time_to_meet(h, yi)
         time_yi_x1 = time_to_meet(yi, x1)
-        XY[x1][yi]['damage'] = sum([time_to_meet(h, y) for y in Y[:i]]) \
-                               + time_h_yi + time_yi_x1
-        XY[x1][yi]['ys'] = [yi + v * time_h_yi, x1 + v * (time_h_yi + time_yi_x1)]
+        XY[x1][yi]['damage'] = sum([time_to_meet_h[y] for y in Y[:i + 1]]) \
+                               + (len(agents) - i - 1) * (time_h_yi + time_yi_x1)
+        XY[x1][yi]['ys'] = [y + v * time_to_meet_h[y] for y in Y[:i + 1]] + [x1 + v * (time_h_yi + time_yi_x1)]
         XY[x1][yi]['t'] = time_h_yi + time_yi_x1
 
     # fill first row of YX
@@ -150,9 +164,9 @@ def line_trpv(h, fv, agents, makespan):
         xi = X[i]
         time_h_xi = time_to_meet(h, xi)
         time_xi_y1 = time_to_meet(xi, y1)
-        YX[y1][xi]['damage'] = sum([time_to_meet(h, x) for x in X[:i]]) \
-                               + time_h_xi + time_xi_y1
-        YX[y1][xi]['ys'] = [xi + v * time_h_xi, y1 + v * (time_h_xi + time_xi_y1)]
+        YX[y1][xi]['damage'] = sum([time_to_meet_h[x] for x in X[:i + 1]]) \
+                               + (len(agents) - i - 1) * (time_h_xi + time_xi_y1)
+        YX[y1][xi]['ys'] = [x + v * time_to_meet_h[x] for x in X[:i + 1]] + [y1 + v * (time_h_xi + time_xi_y1)]
         YX[y1][xi]['t'] = time_h_xi + time_xi_y1
 
     # fill in diagonals
@@ -167,7 +181,7 @@ def line_trpv(h, fv, agents, makespan):
 
         # fill diagonal XY
         while idx_x < len(X) and idx_y >= 0:
-            num_living_agents = len(agents) - (idx_x + idx_y)
+            num_living_agents = len(agents) - (idx_x + idx_y) - 1
 
             cur_x = X[idx_x]
             prev_x = X[idx_x - 1]
@@ -188,7 +202,7 @@ def line_trpv(h, fv, agents, makespan):
                 XY[cur_x][cur_y]['ys'] = path_reaching_from_up + [cur_x + v * XY[cur_x][cur_y]['t']]
             else:
                 XY[cur_x][cur_y]['damage'] = damage_reaching_from_down
-                XY[cur_x][cur_y]['t'] = YX[cur_y][prev_x]['t'] + damage_reaching_from_down
+                XY[cur_x][cur_y]['t'] = YX[cur_y][prev_x]['t'] + time_reaching_from_down
                 path_reaching_from_down = YX[cur_y][prev_x]['ys']
                 XY[cur_x][cur_y]['ys'] = path_reaching_from_down + [cur_x + v * XY[cur_x][cur_y]['t']]
 
@@ -205,7 +219,7 @@ def line_trpv(h, fv, agents, makespan):
 
         # fill diagonal YX
         while idx_y < len(Y) and idx_x >= 0:
-            num_living_agents = len(agents) - (idx_x + idx_y)
+            num_living_agents = len(agents) - (idx_x + idx_y) - 1
 
             cur_y = Y[idx_y]
             prev_y = Y[idx_y - 1]
@@ -214,9 +228,9 @@ def line_trpv(h, fv, agents, makespan):
             time_reaching_from_down = time_to_meet(prev_y, cur_y)
             time_reaching_from_up = time_to_meet(cur_x, cur_y)
 
-            damage_reaching_from_down = XY[cur_x][prev_y]['damage'] \
+            damage_reaching_from_down = YX[prev_y][cur_x]['damage'] \
                                         + num_living_agents * time_reaching_from_down
-            damage_reaching_from_up = YX[prev_y][cur_x]['damage'] \
+            damage_reaching_from_up = XY[cur_x][prev_y]['damage'] \
                                       + num_living_agents * time_reaching_from_up
 
             if damage_reaching_from_down < damage_reaching_from_up:
@@ -240,3 +254,54 @@ def line_trpv(h, fv, agents, makespan):
     if damage_up < damage_down:
         return XY[X[-1]][Y[-1]]
     return YX[Y[-1]][X[-1]]
+
+
+def iterative_assignment(robots, agents_copy):
+    movement = {robot: [] for robot in robots}
+    free_time = {robot: 0 for robot in robots}
+    expected_damage = 0
+    expected_num_disabled = 0
+
+    while len(agents_copy) > 0:
+        distances = [[] for _ in range(len(robots))]
+        for i in range(len(robots)):
+            for a in agents_copy:
+                robot_at_time = robots[i].clone()
+                if len(movement[robots[i]]) > 0:
+                    robot_at_time.loc = movement[robots[i]][-1]
+
+                x_meeting = a.x
+                agent_at_time = BaseAgent(Point(a.x, a.y + free_time[robots[i]] * a.v), a.v)
+                y_meeting = meeting_height(robot_at_time, agent_at_time)
+                distances[i].append(robot_at_time.loc.distance_to(Point(x_meeting, y_meeting)))
+
+        optimal_assignment = linear_sum_assignment(distances)
+        assigned_robots = optimal_assignment[0]
+        assigned_agents = optimal_assignment[1]
+
+        for i in range(len(assigned_robots)):
+            assigned_robot = robots[assigned_robots[i]]
+            assigned_agent = agents_copy[assigned_agents[i]]
+
+            expected_damage += free_time[assigned_robot]
+            expected_num_disabled += 1
+
+            prev_loc = assigned_robot.loc
+            if len(movement[assigned_robot]) > 0:
+                prev_loc = movement[assigned_robot][-1]
+
+            x_meeting = assigned_agent.x
+            y_meeting = meeting_height(assigned_robot, assigned_agent)
+            meeting_point = Point(x_meeting, y_meeting)
+
+            movement[assigned_robot].append(meeting_point)
+            free_time[assigned_robot] += prev_loc.distance_to(meeting_point) / assigned_robot.fv
+
+        agents_to_remove = [agents_copy[i] for i in assigned_agents]
+        for a in agents_to_remove:
+            agents_copy.remove(a)
+
+    return {'movement': movement,
+            'active_time': max(free_time.values()),
+            'damage': expected_damage,
+            'num_disabled': expected_num_disabled}

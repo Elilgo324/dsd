@@ -4,11 +4,15 @@ from math import ceil
 from random import seed
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
+from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
+from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
+from planners.greedy.clustering_assignment_planner import ClusteringAssignmentPlanner
+from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.planner import Planner
 from utils.functions import *
 
-with open('config.json') as json_file:
+with open('def_config.json') as json_file:
     config = json.load(json_file)
 
 
@@ -22,7 +26,7 @@ def run(planner: Planner):
 
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], True)
+                         config['robot_speed'], config['disablement_range'], has_mode=True)
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
@@ -35,17 +39,27 @@ def run(planner: Planner):
                  num_agents=config['num_agents'],
                  num_robots=num_robots_for_full_blockage,
                  f=config['robot_speed'] / config['agent_speed'],
+                 d=config['disablement_range'],
                  active_time=active_time,
                  planner_time=planning_time,
                  damage=expected_damage,
-                 num_disabled=expected_num_disabled)
+                 num_disabled=expected_num_disabled,
+                 file_name='f_results.csv')
 
 
 if __name__ == '__main__':
-    seed(42)
-    planners = [StaticLinePlanner() for _ in range(20)]
-    for i in range(20):
-        for _ in range(3):
-            config['num_agents'] = 50 * (i + 1)
-            print(f'running {str(planners[i])} ..')
-            run(planners[i])
+    planners = [StaticLinePlanner(),
+                TravelingLinePlanner(),
+                IterativeAssignmentPlanner(),
+                ClusteringAssignmentPlanner(),
+                SeparateTravelingPlanner()]
+
+    config['num_agents'] = 500
+    for planner in planners:
+        for v in [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2]:
+            for s in range(30):
+                seed(s)
+
+                config['robot_speed'] = v
+                print(f'running {str(planner)} ..')
+                run(planner)

@@ -1,4 +1,3 @@
-from math import floor
 from typing import Dict, Tuple
 
 from scipy.optimize import linear_sum_assignment
@@ -40,14 +39,18 @@ class SeparateTravelingPlanner(Planner):
             robot = robots[i_robot]
             for i_bucket in range(len(agents_buckets)):
                 bucket = agents_buckets[i_bucket]
+
+                if len(bucket) == 0:
+                    distances[i_robot].append(0)
+                    continue
+
                 H = [meeting_height(robot, BaseAgent(Point(opt_x[i_bucket], agent.y), agent.v)) for agent in bucket]
 
-                h_makespan = {h: robot.loc.distance_to(Point(opt_x[i_bucket], h)) for h in H}
+                h_makespan = {h: robot.loc.distance_to(Point(opt_x[i_bucket], h)) / fv for h in H}
                 h_trpv = {h: line_trpv(h, fv, bucket, h_makespan[h]) for h in H}
 
                 def damage_score(h):
-                    score = h_trpv[h]['damage']
-                    return score + (len(bucket) * makespan(h)) / fv
+                    return h_trpv[h]['damage'] + (len(bucket) * h_makespan[h]) / fv
 
                 hs_damage_scores = {h: damage_score(h) for h in H}
 
@@ -56,32 +59,27 @@ class SeparateTravelingPlanner(Planner):
 
                 distances[i_robot].append(hs_damage_scores[h_opt])
 
-                trp_data = h_trpv[h_opt]
-                trp_data['ys'] = [h_opt] + trp_data['ys']
-                trp_data_per_bucket[robot][i_bucket] = trp_data
+                h_trpv[h_opt]['ys'] = [h_opt] + h_trpv[h_opt]['ys']
+                h_trpv[h_opt]['t'] = h_makespan[h_opt] + h_trpv[h_opt]['t']
+                trp_data_per_bucket[robot][i_bucket] = h_trpv[h_opt]
 
         optimal_assignment = linear_sum_assignment(distances)
-        for i in range(len(optimal_assignment[0])):
-            assigned_robot = robots[i]
-            i_bucket = optimal_assignment[1][i]
-            movement[assigned_robot] = [Point(opt_x[i_bucket], y) for y in trp_data_per_bucket[assigned_robot][i]['ys']]
 
         num_disabled = 0
         active_time = 0
         acc_damage = 0
         for i_robot in range(len(optimal_assignment[0])):
-            robot = robots[i_robot]
+            assigned_robot = robots[i_robot]
             i_bucket = optimal_assignment[1][i_robot]
+            Point(opt_x[i_robot], 0)
+            movement[assigned_robot] = \
+                [Point(opt_x[i_bucket], y) for y in trp_data_per_bucket[assigned_robot][i_robot]['ys']]
 
-            def makespan(h):
-                return sqrt((opt_x[i_bucket] - robot.x) ** 2 + (h - robot.y) ** 2) / robot.fv
-
-            ys = trp_data_per_bucket[robot][i_bucket]['ys']
-            num_disabled += len(ys)
-            active_time = max(active_time, makespan(ys[0]) + trp_data_per_bucket[robot][i_bucket]['t'])
+            num_disabled += len(movement[assigned_robot])
+            active_time = max(active_time, trp_data_per_bucket[assigned_robot][i_bucket]['t'])
             acc_damage += distances[i_robot][i_bucket]
 
-        return movement, active_time, active_time, num_disabled
+        return movement, active_time, acc_damage, num_disabled
 
     def __str__(self):
         return 'SeparateTravelingPlanner'
