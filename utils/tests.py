@@ -2,7 +2,7 @@ import math
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
 from robots.basic_robot import BasicRobot
-from utils.functions import meeting_height, line_trpv, map_into_2_pows
+from utils.functions import meeting_height, line_trpv, map_into_2_pows, flow_moves
 from utils.point import Point
 
 
@@ -137,6 +137,22 @@ def test_line_trpv():
     assert t == 4
 
 
+def test_flow_moves():
+    agents = [FixedVelocityAgent(loc=Point(-1, 9.6), v=1),
+              FixedVelocityAgent(loc=Point(-6, 2), v=1),
+              FixedVelocityAgent(loc=Point(10, 2), v=1),
+              FixedVelocityAgent(loc=Point(8, -1), v=1)]
+
+    robots = [BasicRobot(Point(-1, 9), 2, 1), BasicRobot(Point(3, 8), 2, 1)]
+
+    fm = flow_moves(robots, agents, 10)
+    movement, disabled = fm['movement'], fm['disabled']
+
+    assert movement[robots[0]] == [Point(-6, 10)]
+    assert movement[robots[1]] == [Point(10, 10), Point(8, 10)]
+    assert set(disabled) == set(agents[1:])
+
+
 if __name__ == '__main__':
     test_direction()
     test_shifted()
@@ -144,3 +160,4 @@ if __name__ == '__main__':
     test_meeting_height()
     test_line_trpv()
     test_map_into_2_pows()
+    test_flow_moves()

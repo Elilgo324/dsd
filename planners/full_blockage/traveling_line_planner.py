@@ -7,7 +7,7 @@ from utils.functions import *
 
 
 class TravelingLinePlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         robots = env.robots
         agents = env.agents
         movement = {robot: [] for robot in robots}
@@ -61,6 +61,7 @@ class TravelingLinePlanner(Planner):
                 movement[assigned_robot].append(Point(optimal_x[assigned_robot], y))
 
         return movement, \
+               h_trpv[h_opt]['t'] + h_makespan[h_opt], \
                h_trpv[h_opt]['t'] + h_makespan[h_opt], \
                hs_damage_scores[h_opt], \
                len(optimal_y)

@@ -5,7 +5,7 @@ from utils.point import Point
 
 
 class BasicRobot:
-    def __init__(self, loc: Point, fv: float, r: float, has_mode: bool):
+    def __init__(self, loc: Point, fv: float, r: float, has_mode: bool = True):
         self._loc = loc
         self._fv = fv
         self._r = r
@@ -28,6 +28,10 @@ class BasicRobot:
     @property
     def y(self) -> float:
         return self.loc.y
+
+    @property
+    def xy(self) -> tuple[float, float]:
+        return self.loc.x, self.loc.y
 
     @property
     def fv(self) -> float:
@@ -64,4 +68,3 @@ class BasicRobot:
 
     def __str__(self):
         return f'Robot({self.x},{self.y})'
-

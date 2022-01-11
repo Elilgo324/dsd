@@ -1,15 +1,18 @@
+import math
 import operator
 import os
 from datetime import datetime
 from math import sqrt, floor
 from random import uniform
-from typing import List
+from typing import List, Tuple
 
 import imageio as imageio
 import matplotlib.pyplot as plt
+import networkx as nx
 from scipy.optimize import linear_sum_assignment
 
 from agents.base_agent import BaseAgent
+from agents.fixed_velocity_agent import FixedVelocityAgent
 from environment import Environment
 from robots.basic_robot import BasicRobot
 from utils.consts import Consts
@@ -71,15 +74,16 @@ def write_report(planner: str,
                  f: float,
                  d: float,
                  active_time: float,
+                 completion_time: float,
                  planner_time: float,
                  damage: float,
                  num_disabled: int,
                  file_name: str = 'results.csv') -> None:
-    stats = [planner, num_agents, num_robots, f, d, active_time, planner_time, damage, num_disabled]
+    stats = [planner, num_agents, num_robots, f, d, active_time, completion_time, planner_time, damage, num_disabled]
 
     if not os.path.exists(file_name):
         file = open(file_name, 'a+')
-        file.write('planner,num_agents,num_robots,f,d,active_time,planner_time,damage,'
+        file.write('planner,num_agents,num_robots,f,d,active_time,completion_time,planner_time,damage,'
                    'num_disabled\n')
     else:
         file = open(file_name, 'a+')
@@ -301,7 +305,84 @@ def iterative_assignment(robots, agents_copy):
         for a in agents_to_remove:
             agents_copy.remove(a)
 
+    active_time = completion_time = max(free_time.values())
     return {'movement': movement,
-            'active_time': max(free_time.values()),
+            'active_time': active_time,
+            'completion_time': completion_time,
             'damage': expected_damage,
             'num_disabled': expected_num_disabled}
+
+
+def flow_moves(robots, agents, h):
+    v = agents[0].v
+    fv = robots[0].fv
+
+    def can_stop_on_line(r: Tuple[float, float], a: Tuple[float, float], h: float):
+        x_a, y_a = a
+        x_r, y_r = r
+        t_a = (h - y_a) / v
+        t_r = math.sqrt((x_a - x_r) ** 2 + (h - y_r) ** 2) / fv
+        return t_r <= t_a
+
+    g = nx.DiGraph()
+
+    # create robots
+    for robot in robots:
+        g.add_node(str(robot), pos=robot.xy, color='blue')
+
+    # create agents divided to in and out
+    for agent in agents:
+        g.add_node(str(agent) + '_i', pos=(agent.x - 0.5, agent.y), color='red')
+        g.add_node(str(agent) + '_o', pos=(agent.x + 0.5, agent.y), color='red')
+        g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=-1, capacity=1)
+
+    # add edges from robots to agents
+    for robot in robots:
+        for agent in agents:
+            if can_stop_on_line(r=robot.xy, a=agent.xy, h=h):
+                g.add_edge(str(robot), str(agent) + '_i', weight=0, capacity=1)
+
+    # add edges between agents
+    for agent1 in agents:
+        for agent2 in agents:
+            if agent1 is agent2:
+                continue
+            if can_stop_on_line(r=(agent1.x, h), a=(agent2.x, h - (agent1.y - agent2.y)), h=h):
+                g.add_edge(str(agent1) + '_o', str(agent2) + '_i', weight=0, capacity=1)
+
+    # add dummy source and target to use flow
+    for robot in robots:
+        g.add_edge('s', str(robot), weight=0, capacity=1)
+        g.add_edge(str(robot), 't', weight=0, capacity=1)
+
+    for agent in agents:
+        g.add_edge(str(agent) + '_o', 't', weight=0, capacity=1)
+
+    flow = nx.max_flow_min_cost(g, 's', 't')
+
+    # delete all edges without flow
+    edges_to_delete = []
+    for key1, val1 in flow.items():
+        for key2, val2 in val1.items():
+            if val2 == 0:
+                edges_to_delete.append((key1, key2))
+    for key1, key2 in edges_to_delete:
+        g.remove_edge(key1, key2)
+
+    # calc movement and disabled
+    movement = {robot: [] for robot in robots}
+    agents_names_to_agents = {str(agent) + '_o': agent for agent in agents}
+    disabled = []
+    for robot in robots:
+        robot_name = str(robot)
+        next = list(g.successors(robot_name))[0]
+        while next != 't':
+            if next[-1] == 'i':
+                next = list(g.successors(next))[0]
+            agent = agents_names_to_agents[next]
+            disabled.append(agent)
+            movement[robot].append(Point(agent.x, h))
+            next = list(g.successors(next))[0]
+
+    return {'movement': movement,
+            'disabled': disabled}

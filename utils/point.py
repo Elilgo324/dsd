@@ -30,6 +30,9 @@ class Point:
     def __str__(self):
         return f'({self.x},{self.y})'
 
+    def __hash__(self):
+        return hash((self.x, self.y))
+
     def distance_to(self, other):
         delta_x = self.x - other.x
         delta_y = self.y - other.y

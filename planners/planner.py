@@ -9,7 +9,7 @@ from utils.consts import Consts
 
 
 class Planner(ABC):
-    def plan(self, environment: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+    def plan(self, environment: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         pass
 
 

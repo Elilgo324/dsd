@@ -7,7 +7,7 @@ from utils.functions import *
 
 
 class StaticLinePlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         robots = env.robots
         agents = env.agents
         movement = {robot: [] for robot in robots}
@@ -19,10 +19,10 @@ class StaticLinePlanner(Planner):
         x_min_a = min(a.x for a in agents)
         x_max_a = max(a.x for a in agents)
         actual_range = (x_max_a - x_min_a) / len(robots)
-        y_max_r = max(r.y for r in robots)
+        y_min_a = min(a.y for a in agents)
 
         # optimal assignment on bottom line
-        locations = [Point(x_min_a + actual_range * (i + 0.5), y_max_r) for i in range(len(robots))]
+        locations = [Point(x_min_a + actual_range * (i + 0.5), y_min_a) for i in range(len(robots))]
 
         # hungarian algorithm minimizing makespan
         distances = [[] for _ in range(len(robots))]
@@ -78,8 +78,13 @@ class StaticLinePlanner(Planner):
             assigned_robot = robots[optimal_assignment[0][i]]
             movement[assigned_robot].append(Point(optimal_x[assigned_robot], h_opt))
 
+        completion_time = 0
+        if len(hs_escaping_agents[h_opt][1]) > 0:
+            completion_time = (h_opt - y_min_a) / v
+
         return movement, \
                h_makespan[h_opt], \
+               completion_time, \
                hs_damage_scores[h_opt], \
                len(hs_escaping_agents[h_opt][1])
 

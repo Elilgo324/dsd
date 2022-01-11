@@ -1,8 +1,8 @@
 from abc import ABC
 from copy import deepcopy
+from typing import Tuple
 
 from utils.point import Point
-from utils.consts import Consts
 
 
 class BaseAgent(ABC):
@@ -18,6 +18,10 @@ class BaseAgent(ABC):
     @property
     def y(self) -> float:
         return self._loc.y
+
+    @property
+    def xy(self) -> Tuple[float, float]:
+        return self._loc.x, self._loc.y
 
     @property
     def loc(self):

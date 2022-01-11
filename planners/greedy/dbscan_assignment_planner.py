@@ -7,8 +7,8 @@ from planners.planner import Planner
 from utils.functions import *
 
 
-class ClusteringAssignmentPlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+class DbscanAssignmentPlanner(Planner):
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         robots = env.robots
         agents_copy = [a.clone() for a in env.agents]
         movement = {robot: [] for robot in robots}
@@ -33,6 +33,7 @@ class ClusteringAssignmentPlanner(Planner):
 
         damage = 0
         active_time = 0
+        completion_time = 0
         agents_disabled = 0
 
         for i_robot in assigned_robots:
@@ -42,9 +43,10 @@ class ClusteringAssignmentPlanner(Planner):
 
             damage += iterative_assignments[robot][i_cluster]['damage']
             active_time = max(active_time, iterative_assignments[robot][i_cluster]['active_time'])
+            completion_time = active_time
             agents_disabled += iterative_assignments[robot][i_cluster]['num_disabled']
 
-        return movement, active_time, damage, agents_disabled
+        return movement, active_time, completion_time, damage, agents_disabled
 
     def __str__(self):
-        return 'ClusteringAssignmentPlanner'
+        return 'DbscanAssignmentPlanner'
