@@ -24,22 +24,22 @@ class BaseAgent(ABC):
         return self._loc.x, self._loc.y
 
     @property
-    def loc(self):
+    def loc(self) -> Point:
         return self._loc
 
     @loc.setter
-    def loc(self, value):
+    def loc(self, value) -> None:
         self._loc = value
 
     @property
-    def v(self):
+    def v(self) -> float:
         return self._v
 
-    def clone(self):
+    def clone(self) -> 'BaseAgent':
         return deepcopy(self)
 
-    def advance(self):
+    def advance(self) -> None:
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Agent({round(self.x, 2)},{round(self.y, 2)})'

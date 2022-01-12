@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List
+from typing import List, Tuple
 
 from utils.point import Point
 
@@ -30,7 +30,7 @@ class BasicRobot:
         return self.loc.y
 
     @property
-    def xy(self) -> tuple[float, float]:
+    def xy(self) -> Tuple[float, float]:
         return self.loc.x, self.loc.y
 
     @property

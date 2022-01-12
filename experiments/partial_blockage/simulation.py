@@ -10,7 +10,7 @@ with open('./config.json') as json_file:
     config = json.load(json_file)
 
 
-def run(planner: Planner):
+def run(planner: Planner) -> None:
     agents = [FixedVelocityAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
                                               config['y_buffer'], config['y_buffer'] + config['y_size_init']),
                                  config['agent_speed']) for _ in range(config['num_agents'])]

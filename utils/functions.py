@@ -4,10 +4,10 @@ import os
 from datetime import datetime
 from math import sqrt, floor
 from random import uniform
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Union
 
-import imageio as imageio
-import matplotlib.pyplot as plt
+# import imageio as imageio
+# import matplotlib.pyplot as plt
 import networkx as nx
 from scipy.optimize import linear_sum_assignment
 
@@ -39,7 +39,8 @@ def meeting_height(robot: BasicRobot, agent: BaseAgent) -> float:
     return h
 
 
-def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent], env: Environment, config) -> None:
+def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent],
+                     env: Environment, config: Dict[str,float]) -> None:
     plt.clf()
     plt.xlim(0, config['x_size'] + 2 * config['x_buffer'])
     plt.ylim(0, config['y_size'] + 2 * config['y_buffer'])
@@ -55,7 +56,7 @@ def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent], env: Env
     plt.savefig(f'./plots/{env.step}')
 
 
-def create_gif_from_plots(prefix=''):
+def create_gif_from_plots(prefix: str = ''):
     filenames = os.listdir('./plots/')
     filenames = [file[:-4] for file in filenames]
     with imageio.get_writer(f'./gifs/{prefix}-{datetime.now().minute}.gif', mode='I') as writer:
@@ -99,7 +100,7 @@ def refine_movement(movement):
     return movement
 
 
-def map_into_2_pows(costs) -> List[List[float]]:
+def map_into_2_pows(costs: List[List[float]]) -> List[List[float]]:
     rows_num = len(costs)
     cols_num = len(costs[0])
 
@@ -117,7 +118,8 @@ def map_into_2_pows(costs) -> List[List[float]]:
     return costs
 
 
-def line_trpv(h, fv, agents, makespan):
+def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
+        -> Dict[str, Union[float, Dict['BasicRobot', List[Point]]]]:
     v = agents[0].v
 
     def time_to_meet(source, target):
@@ -260,7 +262,8 @@ def line_trpv(h, fv, agents, makespan):
     return YX[Y[-1]][X[-1]]
 
 
-def iterative_assignment(robots, agents_copy):
+def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent']) \
+        -> Dict[str, Union[int, float]]:
     movement = {robot: [] for robot in robots}
     free_time = {robot: 0 for robot in robots}
     expected_damage = 0
@@ -313,7 +316,7 @@ def iterative_assignment(robots, agents_copy):
             'num_disabled': expected_num_disabled}
 
 
-def flow_moves(robots, agents, h):
+def flow_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
     v = agents[0].v
     fv = robots[0].fv
 
