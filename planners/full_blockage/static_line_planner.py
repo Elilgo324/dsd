@@ -1,6 +1,7 @@
 from typing import Tuple, Dict
 
-from scipy.optimize import linear_sum_assignment
+# from scipy.optimize import linear_sum_assignment
+from munkres import Munkres
 
 from planners.planner import Planner
 from utils.functions import *
@@ -30,7 +31,9 @@ class StaticLinePlanner(Planner):
             distances[i] = [robots[i].loc.distance_to(locations[j]) for j in range(len(locations))]
 
         modified_distances = map_into_2_pows(distances)
-        optimal_assignment = linear_sum_assignment(modified_distances)
+        optimal_assignment = Munkres().compute(modified_distances)
+        assigned_robots, assigned_agents = map(list,zip(*optimal_assignment))
+        optimal_assignment = [assigned_robots, assigned_agents]
 
         # optimal final x values
         optimal_x = {robots[optimal_assignment[0][i]]: locations[optimal_assignment[1][i]].x for i in range(len(
@@ -47,7 +50,7 @@ class StaticLinePlanner(Planner):
         h_makespan = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
 
         # group agents into escaping and non escaping
-        def escaping_agents(h) -> tuple[list[BaseAgent], list[BaseAgent]]:
+        def escaping_agents(h) -> Tuple[List[BaseAgent], List[BaseAgent]]:
             escaping, non_escaping = [], []
             for agent in agents:
                 if agent.y + h_makespan[h] * v > h:

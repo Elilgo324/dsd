@@ -61,7 +61,9 @@ class SeparateTravelingPlanner(Planner):
                 h_trpv[h_opt]['t'] = h_makespan[h_opt] + h_trpv[h_opt]['t']
                 trp_data_per_robot_bucket[i_robot][i_bucket] = h_trpv[h_opt]
 
-        optimal_assignment = linear_sum_assignment(distances)
+        optimal_assignment = Munkres().compute(distances)
+        assigned_robots, assigned_agents = map(list, zip(*optimal_assignment))
+        optimal_assignment = [assigned_robots, assigned_agents]
 
         num_disabled = 0
         active_time = 0

@@ -1,6 +1,7 @@
 from typing import Dict
 
 import numpy as np
+from munkres import Munkres
 from sklearn.cluster import KMeans
 
 from planners.planner import Planner
@@ -27,9 +28,8 @@ class KmeansAssignmentPlanner(Planner):
         distances = [[iterative_assignments[robot][i_cluster]['damage']
                       for i_cluster in range(len(clusters))] for robot in robots]
 
-        optimal_assignment = linear_sum_assignment(distances)
-        assigned_robots = optimal_assignment[0]
-        assigned_clusters = optimal_assignment[1]
+        optimal_assignment = Munkres().compute(distances)
+        assigned_robots, assigned_clusters = map(list, zip(*optimal_assignment))
 
         damage = 0
         active_time = 0

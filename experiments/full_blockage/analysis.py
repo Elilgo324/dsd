@@ -5,9 +5,12 @@ from random import seed
 
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
+# from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
+# from planners.greedy.kmeans_assignment_planner import KmeansAssignmentPlanner
+# from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
-from planners.greedy.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
+# from planners.greedy.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.planner import Planner
 from utils.functions import *
 
@@ -50,13 +53,12 @@ def run(planner: Planner):
 if __name__ == '__main__':
     # planners = [StaticLinePlanner()]
     planners = [IterativeAssignmentPlanner(),
-                KmeansAssignmentPlanner(),
                 SeparateTravelingPlanner(),
                 TravelingLinePlanner()]
 
     for planner in planners:
-        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
-            for s in range(30):
+        for v in [500, 600, 700, 800, 900, 1000]:
+            for s in range(3):
                 seed(s)
 
                 config['num_agents'] = v

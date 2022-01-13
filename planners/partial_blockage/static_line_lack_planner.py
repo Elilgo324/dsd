@@ -6,7 +6,6 @@ class StaticLineLackPlanner(Planner):
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         robots = env.robots
         agents = env.agents
-
         b = env.border
         v = agents[0].v
 

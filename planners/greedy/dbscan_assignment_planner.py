@@ -1,4 +1,5 @@
 import numpy as np
+from munkres import Munkres
 from sklearn.cluster import DBSCAN
 
 from planners.planner import Planner
@@ -30,7 +31,9 @@ class DbscanAssignmentPlanner(Planner):
             distances = [[iterative_assignments[robot][i_cluster]['damage']
                           for i_cluster in range(len(clusters))] for robot in robots]
 
-            optimal_assignment = linear_sum_assignment(distances)
+            optimal_assignment = Munkres().compute(distances)
+            assigned_robots, assigned_agents = map(list, zip(*optimal_assignment))
+            optimal_assignment = [assigned_robots, assigned_agents]
             assigned_robots = optimal_assignment[0]
             assigned_clusters = optimal_assignment[1]
 
