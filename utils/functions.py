@@ -263,7 +263,7 @@ def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
 
 
 def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent']) \
-        -> Dict[str, Union[int, float]]:
+        -> Dict[str, Union[Dict, int, float]]:
     movement = {robot: [] for robot in robots}
     free_time = {robot: 0 for robot in robots}
     expected_damage = 0
