@@ -1,12 +1,10 @@
 import json
 import time
-from math import ceil
 from random import seed
 
-from agents.fixed_velocity_agent import FixedVelocityAgent
-# from planners.greedy.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
+from planners.partial_blockage.static_line_lack_sampling_planner import StaticLineLackSamplingPlanner
 from planners.planner import Planner
 from utils.functions import *
 
@@ -43,14 +41,26 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StaticLineLackPlanner(),
-                IterativeAssignmentPlanner()]
+    # planners = [StaticLineLackPlanner(), IterativeAssignmentPlanner()]
+    planners = [StaticLineLackSamplingPlanner()]
 
     for planner in planners:
-        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
-            for s in range(2):
+        for v in [50,100,200,300,400,500,600,700,800,900,1000]:
+            print(f'running for v={v} ..')
+            for s in range(4):
                 seed(s)
 
                 config['num_agents'] = v
-                print(f'running {str(planner)} ..')
+                print(f'running {str(planner)} with seed {s} ..')
                 run(planner)
+
+    # for planner in planners:
+    #     for v in [1.1, 1.3, 1.5, 1.7, 1.9, 2]:
+    #         print(f'running for v={v} ..')
+    #         for s in range(2):
+    #             seed(s)
+    #
+    #             config['robot_speed'] = v
+    #             config['num_agents'] = 100
+    #             print(f'running {str(planner)} ..')
+    #             run(planner)

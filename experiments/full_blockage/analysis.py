@@ -5,12 +5,10 @@ from random import seed
 
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
-# from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
-# from planners.greedy.kmeans_assignment_planner import KmeansAssignmentPlanner
-# from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
-from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
 # from planners.greedy.kmeans_assignment_planner import KmeansAssignmentPlanner
+from planners.full_blockage.traveling_line_sampling_planner import TravelingLineSamplingPlanner
+from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.planner import Planner
 from utils.functions import *
 
@@ -51,14 +49,26 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    # planners = [StaticLinePlanner()]
-    planners = [IterativeAssignmentPlanner(),
-                SeparateTravelingPlanner(),
-                TravelingLinePlanner()]
+    planners = [TravelingLineSamplingPlanner()]
+    # planners = [IterativeAssignmentPlanner(),
+    #             SeparateTravelingPlanner(),
+    #             TravelingLinePlanner()]
+
+    # for planner in planners:
+    #     for v in [3, 5, 10, 15]:
+    #         print(f'running for v={v} ..')
+    #         for s in range(2):
+    #             seed(s)
+    #
+    #             config['disablement_range'] = v
+    #             config['num_agents'] = 500
+    #             print(f'running {str(planner)} with seed {s} ..')
+    #             run(planner)
 
     for planner in planners:
-        for v in [500, 600, 700, 800, 900, 1000]:
-            for s in range(3):
+        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
+            print(f'running for v={v} ..')
+            for s in range(5):
                 seed(s)
 
                 config['num_agents'] = v

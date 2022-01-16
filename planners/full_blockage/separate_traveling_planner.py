@@ -10,7 +10,6 @@ class SeparateTravelingPlanner(Planner):
         agents = env.agents
         movement = {robot: [] for robot in robots}
 
-        v = agents[0].v
         fv = robots[0].fv
 
         x_min_a = min(a.x for a in agents)
@@ -50,7 +49,7 @@ class SeparateTravelingPlanner(Planner):
                 h_trpv = {h: line_trpv(h, fv, bucket, h_makespan[h]) for h in H}
 
                 def damage_score(h):
-                    return h_trpv[h]['damage'] + (len(bucket) * h_makespan[h]) / fv
+                    return h_trpv[h]['damage'] + len(bucket) * h_makespan[h]
 
                 hs_damage_scores = {h: damage_score(h) for h in H}
                 h_opt = min(H, key=lambda h: hs_damage_scores[h])

@@ -16,7 +16,7 @@ def run(planner: Planner) -> None:
                                  config['agent_speed']) for _ in range(config['num_agents'])]
 
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], has_mode=True)
+                         config['robot_speed'], config['disablement_range'], has_mode=False)
               for _ in range(config['num_robots'])]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])

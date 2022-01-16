@@ -26,7 +26,7 @@ def run(planner: Planner):
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
-    movement, _, _, _ = planner.plan(env)
+    movement, _, _, _, _ = planner.plan(env)
 
     for r in robots:
         r.set_movement(movement[r])

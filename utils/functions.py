@@ -6,11 +6,9 @@ from math import sqrt, floor
 from random import uniform
 from typing import List, Tuple, Dict, Union
 
-# import imageio as imageio
 # import matplotlib.pyplot as plt
-import imageio
+# import imageio
 import networkx as nx
-# from scipy.optimize import linear_sum_assignment
 from munkres import Munkres
 
 from agents.base_agent import BaseAgent
