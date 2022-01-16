@@ -2,6 +2,7 @@ from typing import Tuple, Dict
 
 # from scipy.optimize import linear_sum_assignment
 from munkres import Munkres
+from scipy.optimize import linear_sum_assignment
 
 from planners.planner import Planner
 from utils.functions import *
@@ -31,9 +32,7 @@ class StaticLinePlanner(Planner):
             distances[i] = [robots[i].loc.distance_to(locations[j]) for j in range(len(locations))]
 
         modified_distances = map_into_2_pows(distances)
-        optimal_assignment = Munkres().compute(modified_distances)
-        assigned_robots, assigned_agents = map(list,zip(*optimal_assignment))
-        optimal_assignment = [assigned_robots, assigned_agents]
+        optimal_assignment = linear_sum_assignment(modified_distances)
 
         # optimal final x values
         optimal_x = {robots[optimal_assignment[0][i]]: locations[optimal_assignment[1][i]].x for i in range(len(

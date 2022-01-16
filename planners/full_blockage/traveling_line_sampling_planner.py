@@ -4,6 +4,9 @@ from munkres import Munkres
 # from scipy.optimize import linear_sum_assignment
 
 import random
+
+from scipy.optimize import linear_sum_assignment
+
 from planners.planner import Planner
 from utils.functions import *
 
@@ -31,9 +34,7 @@ class TravelingLineSamplingPlanner(Planner):
         distances = [[] for _ in range(len(robots))]
         for i in range(len(robots)):
             distances[i] = [robots[i].loc.distance_to(locations[j]) for j in range(len(locations))]
-        optimal_assignment = Munkres().compute(distances)
-        assigned_robots, assigned_agents = map(list, zip(*optimal_assignment))
-        optimal_assignment = [assigned_robots, assigned_agents]
+        optimal_assignment = linear_sum_assignment(map_into_2_pows(distances))
 
         # optimal final x values
         optimal_x = {robots[optimal_assignment[0][i]]: locations[optimal_assignment[1][i]].x for i in range(len(
