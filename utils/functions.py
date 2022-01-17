@@ -6,10 +6,10 @@ from math import sqrt, floor
 from random import uniform
 from typing import List, Tuple, Dict, Union
 
-# import matplotlib.pyplot as plt
-# import imageio
+import matplotlib.pyplot as plt
+import imageio
 import networkx as nx
-from munkres import Munkres
+from scipy.optimize import linear_sum_assignment
 
 from agents.base_agent import BaseAgent
 from agents.fixed_velocity_agent import FixedVelocityAgent
@@ -282,8 +282,9 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
                 y_meeting = meeting_height(robot_at_time, agent_at_time)
                 distances[i].append(robot_at_time.loc.distance_to(Point(x_meeting, y_meeting)))
 
-        optimal_assignment = Munkres().compute(distances)
-        assigned_robots, assigned_agents = map(list, zip(*optimal_assignment))
+        optimal_assignment = linear_sum_assignment(distances)
+        assigned_robots = optimal_assignment[0]
+        assigned_agents = optimal_assignment[1]
 
         for i in range(len(assigned_robots)):
             assigned_robot = robots[assigned_robots[i]]

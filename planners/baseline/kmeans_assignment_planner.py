@@ -1,7 +1,6 @@
 from typing import Dict
 
 import numpy as np
-from munkres import Munkres
 from scipy.optimize import linear_sum_assignment
 from sklearn.cluster import KMeans
 

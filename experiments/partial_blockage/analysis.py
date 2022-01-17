@@ -2,7 +2,7 @@ import json
 import time
 from random import seed
 
-from planners.greedy.iterative_assignment_planner import IterativeAssignmentPlanner
+from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.partial_blockage.static_line_lack_sampling_planner import StaticLineLackSamplingPlanner
 from planners.planner import Planner

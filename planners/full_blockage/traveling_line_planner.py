@@ -1,7 +1,5 @@
 from typing import Dict, Tuple
 
-from munkres import Munkres
-# from scipy.optimize import linear_sum_assignment
 from scipy.optimize import linear_sum_assignment
 
 from planners.planner import Planner

@@ -1,8 +1,5 @@
 from typing import Dict, Tuple
 
-from munkres import Munkres
-# from scipy.optimize import linear_sum_assignment
-
 import random
 
 from scipy.optimize import linear_sum_assignment
@@ -13,7 +10,7 @@ from utils.functions import *
 
 class TravelingLineSamplingPlanner(Planner):
     def __init__(self):
-        self.lines_percentage = 10
+        self.lines_percentage = 5
 
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         robots = env.robots
