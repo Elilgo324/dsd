@@ -1,12 +1,12 @@
-import random
+
 
 from planners.planner import Planner
 from utils.functions import *
 
 
-class StaticLineLackSamplingPlanner(Planner):
+class PracticalStaticLineLacklPlanner(Planner):
     def __init__(self):
-        self.lines_percentage = 5
+        self.max_agents = 100
 
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         robots = env.robots
@@ -14,10 +14,16 @@ class StaticLineLackSamplingPlanner(Planner):
         b = env.border
         v = agents[0].v
 
-        H = [meeting_height(robot, agent) for agent in agents for robot in robots]
+        cur_max_agents = min(len(agents), self.max_agents)
 
-        # sample subset of H
-        H = random.sample(H, int(len(H) / self.lines_percentage))
+        agents = sorted(agents, key=lambda a : a.y)
+        active_agents = agents[:cur_max_agents]
+        giveup_agents = agents[cur_max_agents:]
+        giveup_damage = sum([env.border - a.y for a in giveup_agents])
+
+        agents = active_agents
+
+        H = [meeting_height(robot, agent) for agent in agents for robot in robots]
 
         h_fm = {h: flow_moves(robots, agents, h) for h in H}
         h_non_escaping_agents = {h: h_fm[h]['disabled'] for h in H}
@@ -41,8 +47,8 @@ class StaticLineLackSamplingPlanner(Planner):
         return h_movement[h_opt], \
                -1, \
                completion_time, \
-               h_damage_scores[h_opt], \
+               h_damage_scores[h_opt] + giveup_damage, \
                len(h_non_escaping_agents[h_opt])
 
     def __str__(self):
-        return f'StaticLineLackSampling{self.lines_percentage}Planner'
+        return f'Practical{self.max_agents}StaticLineLackPlanner'

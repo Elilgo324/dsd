@@ -5,7 +5,7 @@
   "x_buffer": 10,
   "y_buffer": 10,
   "num_robots": 5,
-  "num_agents": 100,
+  "num_agents": 200,
   "agent_speed": 1,
   "robot_speed": 2,
   "disablement_range": 5

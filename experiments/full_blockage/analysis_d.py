@@ -7,7 +7,7 @@ from planners.full_blockage.separate_traveling_planner import SeparateTravelingP
 from planners.full_blockage.static_line_planner import StaticLinePlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
-from planners.full_blockage.traveling_line_sampling_planner import TravelingLineSamplingPlanner
+from planners.full_blockage.practical_traveling_line_planner import PracticalTravelingLinePlanner
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.planner import Planner
 from utils.functions import *
@@ -45,36 +45,21 @@ def run(planner: Planner):
                  planner_time=planning_time,
                  damage=expected_damage,
                  num_disabled=expected_num_disabled,
-                 file_name='agents_results.csv')
+                 file_name='d_results.csv')
 
 
 if __name__ == '__main__':
-    # planners = [StaticLinePlanner(),
-    #             IterativeAssignmentPlanner(),
-    #             KmeansAssignmentPlanner(),
-    #             SeparateTravelingPlanner(),
-    #             TravelingLineSamplingPlanner(),
-    #             TravelingLinePlanner()]
-    planners = [TravelingLineSamplingPlanner(),
+    planners = [SeparateTravelingPlanner(),
                 TravelingLinePlanner()]
 
-    # for planner in planners:
-    #     for v in [3, 5, 10, 15]:
-    #         print(f'running for v={v} ..')
-    #         for s in range(2):
-    #             seed(s)
-    #
-    #             config['disablement_range'] = v
-    #             config['num_agents'] = 500
-    #             print(f'running {str(planner)} with seed {s} ..')
-    #             run(planner)
+    config['num_agents'] = 300
 
     for planner in planners:
-        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
+        for v in [3, 5, 10, 15]:
             print(f'running for v={v} ..')
             for s in range(30):
                 seed(s)
 
-                config['num_agents'] = v
+                config['disablement_range'] = v
                 print(f'running {str(planner)} with seed {s} ..')
                 run(planner)

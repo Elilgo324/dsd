@@ -1,20 +1,26 @@
-from typing import Dict, Tuple
 
-import random
-
-from scipy.optimize import linear_sum_assignment
 
 from planners.planner import Planner
 from utils.functions import *
 
 
-class TravelingLineSamplingPlanner(Planner):
+class PracticalTravelingLinePlanner(Planner):
     def __init__(self):
-        self.lines_percentage = 5
+        self.max_agents = 100
 
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
         robots = env.robots
         agents = env.agents
+
+        cur_max_agents = min(len(agents), self.max_agents)
+
+        agents = sorted(agents, key=lambda a : a.y)
+        active_agents = agents[:cur_max_agents]
+        giveup_agents = agents[cur_max_agents:]
+        giveup_damage = sum([env.border - a.y for a in giveup_agents])
+
+        agents = active_agents
+
         movement = {robot: [] for robot in robots}
 
         fv = robots[0].fv
@@ -46,9 +52,6 @@ class TravelingLineSamplingPlanner(Planner):
         # potential lines
         H = [meeting_height(farthest_robot, BaseAgent(Point(farthest_x, agent.y), agent.v)) for agent in agents]
 
-        # sample subset of H
-        H = random.sample(H, int(len(H) / self.lines_percentage))
-
         h_makespan = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
         h_trpv = {h: line_trpv(h, fv, agents, h_makespan[h]) for h in H}
 
@@ -71,8 +74,8 @@ class TravelingLineSamplingPlanner(Planner):
         return movement, \
                h_trpv[h_opt]['t'] + h_makespan[h_opt], \
                h_trpv[h_opt]['t'] + h_makespan[h_opt], \
-               hs_damage_scores[h_opt], \
+               hs_damage_scores[h_opt] + giveup_damage, \
                len(optimal_y)
 
     def __str__(self):
-        return f'TravelingLineSampling{self.lines_percentage}Planner'
+        return f'Practical{self.max_agents}TravelingLinePlanner'

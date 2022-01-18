@@ -1,0 +1,9 @@
+Planner,Scenario,Description
+StaticLine,full-blockage,optimal assignment on a blocking line
+TravelingLine,full-blockage,TRP based blocking line
+PracticalTravelingLine,full-blockage,TravelingLine considering only lowest agents
+SeparateTraveling,full-blockage,TravelingLine in buckets
+StaticLineLack,partial-blockage,flow-based moves on a static line
+PracticalStaticLineLack,partial-blockage,StaticLineLack considering only lowest agents
+IterativeAssignment,baseline (both),iterative optimal assignment
+KmeansAssignment,baseline (both),iterative optimal assignment inside clusters
