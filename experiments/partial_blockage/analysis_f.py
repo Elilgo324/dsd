@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     config['num_agents'] = 200
     for planner in planners:
-        for v in [1.3, 1.5, 1.7, 1.9, 2]:
+        for v in [1.4, 1.6, 1.8]:
         # for v in [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2]:
             print(f'running for v={v} ..')
             for s in range(30):
