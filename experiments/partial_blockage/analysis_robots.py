@@ -42,13 +42,15 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StaticLineLackPlanner(), PracticalStaticLineLacklPlanner(), IterativeAssignmentPlanner(),
-                KmeansAssignmentPlanner()]
+    # planners = [IterativeAssignmentPlanner(),
+    #             KmeansAssignmentPlanner()]
+    planners = [PracticalStaticLineLacklPlanner(), StaticLineLackPlanner()]
+    # StaticLineLackPlanner(), PracticalStaticLineLacklPlanner(),
 
     config['num_agents'] = 200
 
     for planner in planners:
-        for v in [1, 2, 3, 4, 5, 6, 7, 8]:
+        for v in [2, 4, 6, 8]:
             print(f'running for v={v} ..')
             for s in range(30):
                 seed(s)
