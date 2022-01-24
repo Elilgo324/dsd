@@ -1,8 +1,10 @@
+
+
 from planners.planner import Planner
 from utils.functions import *
 
 
-class PracticalStaticLineLacklPlanner(Planner):
+class WavesStaticLacklPlanner(Planner):
     def __init__(self):
         self.max_agents = 100
 
@@ -14,7 +16,7 @@ class PracticalStaticLineLacklPlanner(Planner):
 
         cur_max_agents = min(len(agents), self.max_agents)
 
-        agents = sorted(agents, key=lambda a: a.y)
+        agents = sorted(agents, key=lambda a : a.y)
         active_agents = agents[:cur_max_agents]
         giveup_agents = agents[cur_max_agents:]
         giveup_damage = sum([env.border - a.y for a in giveup_agents])
@@ -23,29 +25,30 @@ class PracticalStaticLineLacklPlanner(Planner):
 
         H = [meeting_height(robot, agent) for agent in agents for robot in robots]
 
-        flow_per_h = {h: flow_moves(robots, agents, h) for h in H}
-        disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
-        movement_per_h = {h: flow_per_h[h]['movement'] for h in H}
+        h_fm = {h: flow_moves(robots, agents, h) for h in H}
+        h_non_escaping_agents = {h: h_fm[h]['disabled'] for h in H}
+        h_movement = {h: h_fm[h]['movement'] for h in H}
 
         # calculate line score
         def damage_score(h):
-            non_escaping = disabled_per_h[h]
+            non_escaping = h_non_escaping_agents[h]
             damage = sum([b - agent.y for agent in agents])
             damage -= sum([b - h for _ in non_escaping])
+
             return damage
 
-        damage_score_per_h = {h: damage_score(h) for h in H}
-        h_opt = min(H, key=lambda h: damage_score_per_h[h])
+        h_damage_scores = {h: damage_score(h) for h in H}
+        h_opt = min(H, key=lambda h: h_damage_scores[h])
 
         completion_time = 0
-        if len(disabled_per_h[h_opt]) > 0:
-            completion_time = (h_opt - min([agent.y for agent in disabled_per_h[h_opt]])) / v
+        if len(h_non_escaping_agents[h_opt]) > 0:
+            completion_time = (h_opt - min([agent.y for agent in h_non_escaping_agents[h_opt]])) / v
 
-        return movement_per_h[h_opt], \
+        return h_movement[h_opt], \
                -1, \
                completion_time, \
-               damage_score_per_h[h_opt] + giveup_damage, \
-               len(disabled_per_h[h_opt])
+               h_damage_scores[h_opt] + giveup_damage, \
+               len(h_non_escaping_agents[h_opt])
 
     def __str__(self):
-        return f'Practical{self.max_agents}StaticLineLackPlanner'
+        return f'WavesStaticLacklPlanner'

@@ -2,6 +2,7 @@ import json
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
+from planners.partial_blockage.separate_static_lack_planner import SeparateStaticLackPlanner
 from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.planner import Planner
 from utils.functions import *
@@ -16,7 +17,7 @@ def run(planner: Planner) -> None:
                                  config['agent_speed']) for _ in range(config['num_agents'])]
 
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], has_mode=False)
+                         config['robot_speed'], config['disablement_range'], has_mode=True)
               for _ in range(config['num_robots'])]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])

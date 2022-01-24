@@ -11,30 +11,29 @@ class StaticLineLackPlanner(Planner):
 
         H = [meeting_height(robot, agent) for agent in agents for robot in robots]
 
-        h_fm = {h: flow_moves(robots, agents, h) for h in H}
-        h_non_escaping_agents = {h: h_fm[h]['disabled'] for h in H}
-        h_movement = {h: h_fm[h]['movement'] for h in H}
+        flow_per_h = {h: flow_moves(robots, agents, h) for h in H}
+        disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
+        movement_per_h = {h: flow_per_h[h]['movement'] for h in H}
 
         # calculate line score
         def damage_score(h):
-            non_escaping = h_non_escaping_agents[h]
+            non_escaping = disabled_per_h[h]
             damage = sum([b - agent.y for agent in agents])
             damage -= sum([b - h for _ in non_escaping])
-
             return damage
 
-        h_damage_scores = {h: damage_score(h) for h in H}
-        h_opt = min(H, key=lambda h: h_damage_scores[h])
+        damage_score_per_h = {h: damage_score(h) for h in H}
+        h_opt = min(H, key=lambda h: damage_score_per_h[h])
 
         completion_time = 0
-        if len(h_non_escaping_agents[h_opt]) > 0:
-            completion_time = (h_opt - min([agent.y for agent in h_non_escaping_agents[h_opt]])) / v
+        if len(disabled_per_h[h_opt]) > 0:
+            completion_time = (h_opt - min([agent.y for agent in disabled_per_h[h_opt]])) / v
 
-        return h_movement[h_opt], \
+        return movement_per_h[h_opt], \
                -1, \
                completion_time, \
-               h_damage_scores[h_opt], \
-               len(h_non_escaping_agents[h_opt])
+               damage_score_per_h[h_opt], \
+               len(disabled_per_h[h_opt])
 
     def __str__(self):
         return 'StaticLineLackPlanner'
