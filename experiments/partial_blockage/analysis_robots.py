@@ -42,9 +42,9 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    # planners = [IterativeAssignmentPlanner(),
-    #             KmeansAssignmentPlanner()]
-    planners = [PracticalStaticLineLacklPlanner(), StaticLineLackPlanner()]
+    planners = [IterativeAssignmentPlanner(),
+                KmeansAssignmentPlanner()]
+    # planners = [PracticalStaticLineLacklPlanner(), StaticLineLackPlanner()]
     # StaticLineLackPlanner(), PracticalStaticLineLacklPlanner(),
 
     config['num_agents'] = 200
