@@ -2,7 +2,7 @@ from planners.planner import Planner
 from utils.functions import *
 
 
-class PracticalStaticLineLacklPlanner(Planner):
+class LowStaticLineLacklPlanner(Planner):
     def __init__(self):
         self.max_agents = 100
 
@@ -47,4 +47,4 @@ class PracticalStaticLineLacklPlanner(Planner):
                len(disabled_per_h[h_opt])
 
     def __str__(self):
-        return f'Practical{self.max_agents}StaticLineLackPlanner'
+        return f'Low{self.max_agents}StaticLineLackPlanner'

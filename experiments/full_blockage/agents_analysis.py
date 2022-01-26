@@ -3,14 +3,16 @@ import time
 from math import ceil
 from random import seed
 
+from environment.agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.full_blockage.bottom_up_scanner_line_planner import BottomUpScannerPlanner
+from planners.full_blockage.high_traveling_line_planner import HighTravelingLinePlanner
 from planners.full_blockage.separate_static_planner import SeparateStaticPlanner
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
 from planners.full_blockage.top_down_scanner_line_planner import TopDownScannerPlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
-from planners.full_blockage.practical_traveling_line_planner import PracticalTravelingLinePlanner
+from planners.full_blockage.low_traveling_line_planner import LowTravelingLinePlanner
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.planner import Planner
 from utils.functions import *
@@ -57,7 +59,7 @@ if __name__ == '__main__':
     #             SeparateTravelingPlanner(),
     #             TravelingLineSamplingPlanner(),
     #             TravelingLinePlanner()]
-    planners = [SeparateStaticPlanner()]
+    planners = [HighTravelingLinePlanner()]
 
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:

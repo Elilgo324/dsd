@@ -9,7 +9,7 @@ from planners.full_blockage.separate_traveling_planner import SeparateTravelingP
 from planners.full_blockage.static_line_planner import StaticLinePlanner
 from planners.full_blockage.top_down_scanner_line_planner import TopDownScannerPlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
-from planners.full_blockage.practical_traveling_line_planner import PracticalTravelingLinePlanner
+from planners.full_blockage.low_traveling_line_planner import LowTravelingLinePlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.planner import Planner
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     planners = [StaticLinePlanner(),
                 IterativeAssignmentPlanner(),
                 KmeansAssignmentPlanner(),
-                PracticalTravelingLinePlanner(),
+                LowTravelingLinePlanner(),
                 SeparateTravelingPlanner(),
                 TravelingLinePlanner()]
     planners = [BottomUpScannerPlanner(), TopDownScannerPlanner(), IterativeAssignmentPlanner(),

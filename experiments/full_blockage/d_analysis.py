@@ -7,7 +7,7 @@ from planners.full_blockage.separate_traveling_planner import SeparateTravelingP
 from planners.full_blockage.static_line_planner import StaticLinePlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
-from planners.full_blockage.practical_traveling_line_planner import PracticalTravelingLinePlanner
+from planners.full_blockage.low_traveling_line_planner import LowTravelingLinePlanner
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.planner import Planner
 from utils.functions import *

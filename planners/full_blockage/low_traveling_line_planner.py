@@ -1,10 +1,8 @@
-
-
 from planners.planner import Planner
 from utils.functions import *
 
 
-class PracticalTravelingLinePlanner(Planner):
+class LowTravelingLinePlanner(Planner):
     def __init__(self):
         self.max_agents = 100
 
@@ -14,7 +12,7 @@ class PracticalTravelingLinePlanner(Planner):
 
         cur_max_agents = min(len(agents), self.max_agents)
 
-        agents = sorted(agents, key=lambda a : a.y)
+        agents = sorted(agents, key=lambda a: a.y)
         active_agents = agents[:cur_max_agents]
         giveup_agents = agents[cur_max_agents:]
         giveup_damage = sum([env.border - a.y for a in giveup_agents])
@@ -77,4 +75,4 @@ class PracticalTravelingLinePlanner(Planner):
                len(optimal_y)
 
     def __str__(self):
-        return f'Practical{self.max_agents}TravelingLinePlanner'
+        return f'Low{self.max_agents}TravelingLinePlanner'
