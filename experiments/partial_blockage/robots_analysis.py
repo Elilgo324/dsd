@@ -4,8 +4,6 @@ from random import seed
 
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
-from planners.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
-from planners.partial_blockage.separate_static_lack_planner import SeparateStaticLackPlanner
 from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.partial_blockage.practical_static_line_lack import PracticalStaticLineLacklPlanner
 from planners.planner import Planner
@@ -40,20 +38,23 @@ def run(planner: Planner):
                  planner_time=planning_time,
                  damage=expected_damage,
                  num_disabled=expected_num_disabled,
-                 file_name='agents_results.csv')
+                 file_name='robots_results.csv')
 
 
 if __name__ == '__main__':
-    # planners = [StaticLineLackPlanner(), IterativeAssignmentPlanner()]
-    # planners = [PracticalStaticLineLacklPlanner(), IterativeAssignmentPlanner(), KmeansAssignmentPlanner()]
-    planners = [AdditiveStaticLackPlanner()]
+    planners = [IterativeAssignmentPlanner(),
+                KmeansAssignmentPlanner()]
+    # planners = [PracticalStaticLineLacklPlanner(), StaticLineLackPlanner()]
+    # StaticLineLackPlanner(), PracticalStaticLineLacklPlanner(),
+
+    config['num_agents'] = 200
 
     for planner in planners:
-        for v in [400, 500, 600, 700, 800]:
-            print(f'running for v={v} ..')
-            for s in range(3):
+        for v in [2, 4, 6, 8]:
+            print(f'*** *** v={v} *** ***')
+            for s in range(30):
                 seed(s)
 
-                config['num_agents'] = v
-                print(f'running {str(planner)} with seed {s} ..')
+                config['num_robots'] = v
+                print(f'running {str(planner)} with seed {s}..')
                 run(planner)

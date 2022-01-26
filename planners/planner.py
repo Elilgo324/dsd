@@ -1,11 +1,9 @@
 from abc import ABC
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Tuple
 
-from agents.base_agent import BaseAgent
-from robots.basic_robot import BasicRobot
-from environment import Environment
+from environment.robots.basic_robot import BasicRobot
+from environment.environment import Environment
 from utils.point import Point
-from utils.consts import Consts
 
 
 class Planner(ABC):

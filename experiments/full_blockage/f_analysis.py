@@ -3,9 +3,11 @@ import time
 from math import ceil
 from random import seed
 
+from environment.agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.full_blockage.bottom_up_scanner_line_planner import BottomUpScannerPlanner
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
+from planners.full_blockage.top_down_scanner_line_planner import TopDownScannerPlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.full_blockage.practical_traveling_line_planner import PracticalTravelingLinePlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
@@ -33,7 +35,7 @@ def run(planner: Planner):
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
     before = time.time()
-    movement, active_time, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
+    movement, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
     planning_time = time.time() - before
 
     write_report(planner=str(planner),
@@ -41,7 +43,6 @@ def run(planner: Planner):
                  num_robots=num_robots_for_full_blockage,
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 active_time=active_time,
                  completion_time=completion_time,
                  planner_time=planning_time,
                  damage=expected_damage,
@@ -56,16 +57,17 @@ if __name__ == '__main__':
                 PracticalTravelingLinePlanner(),
                 SeparateTravelingPlanner(),
                 TravelingLinePlanner()]
-    planners = [BottomUpScannerPlanner()]
+    planners = [BottomUpScannerPlanner(), TopDownScannerPlanner(), IterativeAssignmentPlanner(),
+                SeparateTravelingPlanner()]
 
     config['num_agents'] = 300
 
     for planner in planners:
-        for v in [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2]:
-            print(f'running for v={v} ..')
-            for s in range(30):
+        for v in [2.5, 3, 3.5, 4]:
+            print(f'*** *** v={v} *** ***')
+            for s in range(10):
                 seed(s)
 
                 config['robot_speed'] = v
-                print(f'running {str(planner)} with seed {s} ..')
+                print(f'running {str(planner)} with seed {s}..')
                 run(planner)

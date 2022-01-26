@@ -1,7 +1,7 @@
 import math
 
-from agents.fixed_velocity_agent import FixedVelocityAgent
-from robots.basic_robot import BasicRobot
+from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.robots.basic_robot import BasicRobot
 from utils.functions import meeting_height, line_trpv, map_into_2_pows, flow_moves
 from utils.point import Point
 

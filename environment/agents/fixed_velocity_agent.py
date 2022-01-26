@@ -1,4 +1,4 @@
-from agents.base_agent import BaseAgent
+from environment.agents.base_agent import BaseAgent
 from utils.point import Point
 
 

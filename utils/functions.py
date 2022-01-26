@@ -11,10 +11,9 @@ import imageio
 import networkx as nx
 from scipy.optimize import linear_sum_assignment
 
-from agents.base_agent import BaseAgent
-from agents.fixed_velocity_agent import FixedVelocityAgent
-from environment import Environment
-from robots.basic_robot import BasicRobot
+from environment.agents.base_agent import BaseAgent
+from environment.environment import Environment
+from environment.robots.basic_robot import BasicRobot
 from utils.consts import Consts
 from utils.point import Point
 

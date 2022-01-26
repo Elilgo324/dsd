@@ -1,10 +1,7 @@
 import json
 
-from agents.fixed_velocity_agent import FixedVelocityAgent
-from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
+from environment.agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
-from planners.partial_blockage.separate_static_lack_planner import SeparateStaticLackPlanner
-from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.planner import Planner
 from utils.functions import *
 

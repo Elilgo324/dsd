@@ -1,8 +1,8 @@
 from copy import deepcopy
 from typing import List, Tuple, Union
 
-from agents.base_agent import BaseAgent
-from robots.basic_robot import BasicRobot
+from environment.agents.base_agent import BaseAgent
+from environment.robots.basic_robot import BasicRobot
 
 
 class Environment:

@@ -1,4 +1,4 @@
-from robots.basic_robot import BasicRobot
+from environment.robots.basic_robot import BasicRobot
 from utils.point import Point
 
 

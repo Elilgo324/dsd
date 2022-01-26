@@ -61,10 +61,10 @@ if __name__ == '__main__':
 
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
-            print(f'running for v={v} ..')
+            print(f'*** *** v={v} *** ***')
             for s in range(3):
                 seed(s)
 
                 config['num_agents'] = v
-                print(f'running {str(planner)} with seed {s} ..')
+                print(f'running {str(planner)} with seed {s}..')
                 run(planner)
