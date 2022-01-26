@@ -2,6 +2,7 @@ import json
 
 from agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
+from planners.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
 from planners.partial_blockage.separate_static_lack_planner import SeparateStaticLackPlanner
 from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.planner import Planner
@@ -41,7 +42,7 @@ def run(planner: Planner) -> None:
 
 if __name__ == '__main__':
     # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
-    planners = [StaticLineLackPlanner() for _ in range(1)]
+    planners = [AdditiveStaticLackPlanner() for _ in range(1)]
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)

@@ -9,7 +9,7 @@ from utils.functions import *
 
 
 class KmeansAssignmentPlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents_copy = [a.clone() for a in env.agents]
         movement = {robot: [] for robot in robots}
@@ -33,7 +33,6 @@ class KmeansAssignmentPlanner(Planner):
         assigned_clusters = optimal_assignment[1]
 
         damage = 0
-        active_time = 0
         completion_time = 0
         agents_disabled = 0
 
@@ -43,11 +42,10 @@ class KmeansAssignmentPlanner(Planner):
             movement[robot] = iterative_assignments[robot][i_cluster]['movement'][robot]
 
             damage += iterative_assignments[robot][i_cluster]['damage']
-            active_time = max(active_time, iterative_assignments[robot][i_cluster]['active_time'])
-            completion_time = active_time
+            completion_time = max(completion_time, iterative_assignments[robot][i_cluster]['active_time'])
             agents_disabled += iterative_assignments[robot][i_cluster]['num_disabled']
 
-        return movement, active_time, completion_time, damage, agents_disabled
+        return movement, completion_time, damage, agents_disabled
 
     def __str__(self):
         return 'KmeansAssignmentPlanner'

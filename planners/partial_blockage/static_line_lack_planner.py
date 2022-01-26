@@ -3,13 +3,15 @@ from utils.functions import *
 
 
 class StaticLineLackPlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = env.agents
         b = env.border
         v = agents[0].v
 
-        H = [meeting_height(robot, agent) for agent in agents for robot in robots]
+        H = [meeting_height(robot, agent) for agent in agents for robot in robots if meeting_height(robot, agent) < b]
+        if len(H) == 0:
+            return {robot: [robot.loc] for robot in robots}, 0, sum([b - agent.y for agent in agents]), 0
 
         flow_per_h = {h: flow_moves(robots, agents, h) for h in H}
         disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
@@ -17,10 +19,7 @@ class StaticLineLackPlanner(Planner):
 
         # calculate line score
         def damage_score(h):
-            non_escaping = disabled_per_h[h]
-            damage = sum([b - agent.y for agent in agents])
-            damage -= sum([b - h for _ in non_escaping])
-            return damage
+            return sum([b - agent.y for agent in agents]) - len(disabled_per_h[h]) * (b - h)
 
         damage_score_per_h = {h: damage_score(h) for h in H}
         h_opt = min(H, key=lambda h: damage_score_per_h[h])
@@ -30,7 +29,6 @@ class StaticLineLackPlanner(Planner):
             completion_time = (h_opt - min([agent.y for agent in disabled_per_h[h_opt]])) / v
 
         return movement_per_h[h_opt], \
-               -1, \
                completion_time, \
                damage_score_per_h[h_opt], \
                len(disabled_per_h[h_opt])

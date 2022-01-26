@@ -7,7 +7,7 @@ from utils.functions import *
 
 
 class TravelingLinePlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = env.agents
         movement = {robot: [] for robot in robots}
@@ -41,18 +41,18 @@ class TravelingLinePlanner(Planner):
 
         # potential lines
         H = [meeting_height(farthest_robot, BaseAgent(Point(farthest_x, agent.y), agent.v)) for agent in agents]
-        h_makespan = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
-        h_trpv = {h: line_trpv(h, fv, agents, h_makespan[h]) for h in H}
+        makespan_per_h = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
+        trp_per_h = {h: line_trpv(h, fv, agents, makespan_per_h[h]) for h in H}
 
         def damage_score(h):
-            return h_trpv[h]['damage'] + (len(agents) * h_makespan[h])
+            return trp_per_h[h]['damage'] + (len(agents) * makespan_per_h[h])
 
-        hs_damage_scores = {h: damage_score(h) for h in H}
+        damage_score_per_h = {h: damage_score(h) for h in H}
 
         # assign robots on h opt
-        h_opt = min(H, key=lambda h: hs_damage_scores[h])
+        h_opt = min(H, key=lambda h: damage_score_per_h[h])
 
-        optimal_y = [h_opt] + h_trpv[h_opt]['ys']
+        optimal_y = [h_opt] + trp_per_h[h_opt]['ys']
 
         # add trp movement
         for i in range(len(optimal_assignment[0])):
@@ -61,9 +61,8 @@ class TravelingLinePlanner(Planner):
                 movement[assigned_robot].append(Point(optimal_x[assigned_robot], y))
 
         return movement, \
-               h_trpv[h_opt]['t'] + h_makespan[h_opt], \
-               h_trpv[h_opt]['t'] + h_makespan[h_opt], \
-               hs_damage_scores[h_opt], \
+               trp_per_h[h_opt]['t'] + makespan_per_h[h_opt], \
+               damage_score_per_h[h_opt], \
                len(optimal_y)
 
     def __str__(self):

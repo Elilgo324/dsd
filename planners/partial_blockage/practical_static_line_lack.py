@@ -6,7 +6,7 @@ class PracticalStaticLineLacklPlanner(Planner):
     def __init__(self):
         self.max_agents = 100
 
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = env.agents
         b = env.border
@@ -42,7 +42,6 @@ class PracticalStaticLineLacklPlanner(Planner):
             completion_time = (h_opt - min([agent.y for agent in disabled_per_h[h_opt]])) / v
 
         return movement_per_h[h_opt], \
-               -1, \
                completion_time, \
                damage_score_per_h[h_opt] + giveup_damage, \
                len(disabled_per_h[h_opt])

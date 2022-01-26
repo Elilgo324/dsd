@@ -8,7 +8,7 @@ class PracticalTravelingLinePlanner(Planner):
     def __init__(self):
         self.max_agents = 100
 
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = env.agents
 
@@ -72,7 +72,6 @@ class PracticalTravelingLinePlanner(Planner):
                 movement[assigned_robot].append(Point(optimal_x[assigned_robot], y))
 
         return movement, \
-               h_trpv[h_opt]['t'] + h_makespan[h_opt], \
                h_trpv[h_opt]['t'] + h_makespan[h_opt], \
                hs_damage_scores[h_opt] + giveup_damage, \
                len(optimal_y)

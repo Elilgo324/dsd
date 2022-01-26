@@ -3,6 +3,7 @@ import time
 from math import ceil
 from random import seed
 
+from planners.full_blockage.bottom_up_scanner_line_planner import BottomUpScannerPlanner
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
@@ -55,6 +56,7 @@ if __name__ == '__main__':
                 PracticalTravelingLinePlanner(),
                 SeparateTravelingPlanner(),
                 TravelingLinePlanner()]
+    planners = [BottomUpScannerPlanner()]
 
     config['num_agents'] = 300
 

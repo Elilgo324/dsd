@@ -3,13 +3,13 @@ from utils.functions import *
 
 
 class SeparateStaticLackPlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = env.agents
         b = env.border
         v = agents[0].v
-        fv = robots[0].fv
 
+        # returned stats
         movement = {robot: [] for robot in robots}
         completion_time = 0
         acc_damage = 0
@@ -19,25 +19,25 @@ class SeparateStaticLackPlanner(Planner):
         x_min_a = min(a.x for a in agents)
         x_max_a = max(a.x for a in agents)
         bucket_size = (x_max_a - x_min_a) / len(robots)
-        agents_buckets = [[] for _ in range(len(robots))]
+        buckets = [[] for _ in range(len(robots))]
 
         for a in agents:
             bucket_id = floor((a.x - x_min_a) / bucket_size)
-            if bucket_id < len(agents_buckets):
-                agents_buckets[bucket_id].append(a)
+            if bucket_id < len(buckets):
+                buckets[bucket_id].append(a)
             else:
-                agents_buckets[-1].append(a)
+                buckets[-1].append(a)
 
         # create flow data for each robot and bucket
         score_per_robot_bucket = [[] for _ in range(len(robots))]
-        data_per_robot_bucket = {i_robot: {i_bucket: {} for i_bucket in range(len(agents_buckets))}
+        data_per_robot_bucket = {i_robot: {i_bucket: {} for i_bucket in range(len(buckets))}
                                  for i_robot in range(len(robots))}
 
         for i_robot in range(len(robots)):
             robot = robots[i_robot]
 
-            for i_bucket in range(len(agents_buckets)):
-                bucket = agents_buckets[i_bucket]
+            for i_bucket in range(len(buckets)):
+                bucket = buckets[i_bucket]
 
                 if len(bucket) == 0:
                     score_per_robot_bucket[i_robot].append(0)
@@ -52,10 +52,7 @@ class SeparateStaticLackPlanner(Planner):
 
                 def damage_score(h):
                     non_escaping = flow_per_h[h]['disabled']
-                    damage = sum([b - agent.y for agent in agents])
-                    damage -= sum([b - h for _ in non_escaping])
-
-                    return damage
+                    return sum([b - agent.y for agent in bucket]) - len(non_escaping) * (b - h)
 
                 damage_score_per_h = {h: damage_score(h) for h in H}
                 h_opt = min(H, key=lambda h: damage_score_per_h[h])
@@ -85,7 +82,7 @@ class SeparateStaticLackPlanner(Planner):
             acc_damage += data_per_robot_bucket[i_robot][i_bucket]['damage']
             num_disabled += data_per_robot_bucket[i_robot][i_bucket]['num_disabled']
 
-        return movement, -1, completion_time, acc_damage, num_disabled
+        return movement, completion_time, acc_damage, num_disabled
 
     def __str__(self):
         return 'SeparateStaticLackPlanner'

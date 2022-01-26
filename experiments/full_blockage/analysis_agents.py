@@ -3,8 +3,11 @@ import time
 from math import ceil
 from random import seed
 
+from planners.full_blockage.bottom_up_scanner_line_planner import BottomUpScannerPlanner
+from planners.full_blockage.separate_static_planner import SeparateStaticPlanner
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
+from planners.full_blockage.top_down_scanner_line_planner import TopDownScannerPlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.full_blockage.practical_traveling_line_planner import PracticalTravelingLinePlanner
@@ -32,7 +35,7 @@ def run(planner: Planner):
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
     before = time.time()
-    movement, active_time, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
+    movement, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
     planning_time = time.time() - before
 
     write_report(planner=str(planner),
@@ -40,7 +43,6 @@ def run(planner: Planner):
                  num_robots=num_robots_for_full_blockage,
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 active_time=active_time,
                  completion_time=completion_time,
                  planner_time=planning_time,
                  damage=expected_damage,
@@ -55,12 +57,12 @@ if __name__ == '__main__':
     #             SeparateTravelingPlanner(),
     #             TravelingLineSamplingPlanner(),
     #             TravelingLinePlanner()]
-    planners = [PracticalTravelingLinePlanner()]
+    planners = [SeparateStaticPlanner()]
 
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'running for v={v} ..')
-            for s in range(5):
+            for s in range(3):
                 seed(s)
 
                 config['num_agents'] = v

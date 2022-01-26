@@ -1,13 +1,9 @@
-from typing import Tuple, Dict
-
-from scipy.optimize import linear_sum_assignment
-
 from planners.planner import Planner
 from utils.functions import *
 
 
 class StaticLinePlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, float, int]:
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = env.agents
         movement = {robot: [] for robot in robots}
@@ -44,49 +40,33 @@ class StaticLinePlanner(Planner):
 
         # potential lines
         H = [meeting_height(farthest_robot, BaseAgent(Point(farthest_x, agent.y), agent.v)) for agent in agents]
-        h_makespan = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
+        makespan_per_h = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
 
-        # group agents into escaping and non escaping
-        def escaping_agents(h) -> Tuple[List[BaseAgent], List[BaseAgent]]:
-            escaping, non_escaping = [], []
-            for agent in agents:
-                if agent.y + h_makespan[h] * v > h:
-                    escaping.append(agent)
-                else:
-                    non_escaping.append(agent)
-            return escaping, non_escaping
-
-        hs_escaping_agents = {h: escaping_agents(h) for h in H}
+        # num of disabled agents
+        num_disabled_per_h = {h: sum([1 if a.y + makespan_per_h[h] * v < h else 0 for a in agents]) for h in H}
 
         # calculate line score
         def damage_score(h):
-            escaping, non_escaping = hs_escaping_agents[h]
-            damage = 0
+            return sum([b - agent.y for agent in agents]) - num_disabled_per_h[h] * (b - h)
 
-            for agent in escaping:
-                damage += b - agent.y
-            for agent in non_escaping:
-                damage += h - agent.y
-            return damage
-
-        hs_damage_scores = {h: damage_score(h) for h in H}
+        damage_score_per_h = {h: damage_score(h) for h in H}
 
         # assign robots on h opt
-        h_opt = min(H, key=lambda h: hs_damage_scores[h])
+        h_opt = min(H, key=lambda h: damage_score_per_h[h])
 
+        # combine optimal movements
         for i in range(len(optimal_assignment[0])):
             assigned_robot = robots[optimal_assignment[0][i]]
             movement[assigned_robot].append(Point(optimal_x[assigned_robot], h_opt))
 
         completion_time = 0
-        if len(hs_escaping_agents[h_opt][1]) > 0:
+        if num_disabled_per_h[h_opt] > 0:
             completion_time = (h_opt - y_min_a) / v
 
         return movement, \
-               h_makespan[h_opt], \
                completion_time, \
-               hs_damage_scores[h_opt], \
-               len(hs_escaping_agents[h_opt][1])
+               damage_score_per_h[h_opt], \
+               num_disabled_per_h[h_opt]
 
     def __str__(self):
         return 'StaticLinePlanner'

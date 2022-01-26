@@ -53,6 +53,7 @@ def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent],
         plt.annotate(i, (robots[i].x, robots[i].y))
     plt.scatter([a.x for a in agents], [a.y for a in agents], c='red')
     plt.title(env.stats(), fontsize=10)
+    # plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(f'./plots/{env.step}')
 
 
@@ -74,17 +75,16 @@ def write_report(planner: str,
                  num_robots: int,
                  f: float,
                  d: float,
-                 active_time: float,
                  completion_time: float,
                  planner_time: float,
                  damage: float,
                  num_disabled: int,
                  file_name: str = 'results.csv') -> None:
-    stats = [planner, num_agents, num_robots, f, d, active_time, completion_time, planner_time, damage, num_disabled]
+    stats = [planner, num_agents, num_robots, f, d, completion_time, planner_time, damage, num_disabled]
 
     if not os.path.exists(file_name):
         file = open(file_name, 'a+')
-        file.write('planner,num_agents,num_robots,f,d,active_time,completion_time,planner_time,damage,'
+        file.write('planner,num_agents,num_robots,f,d,completion_time,planner_time,damage,'
                    'num_disabled\n')
     else:
         file = open(file_name, 'a+')
