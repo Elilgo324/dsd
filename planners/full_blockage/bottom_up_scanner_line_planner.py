@@ -1,6 +1,6 @@
 from typing import Tuple, Dict
 
-from scipy.optimize import linear_sum_assignment
+from scipy.optimize import linear_sum_iassignment
 
 from planners.planner import Planner
 from utils.functions import *
