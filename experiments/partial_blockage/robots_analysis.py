@@ -2,8 +2,11 @@ import json
 import time
 from random import seed
 
+from environment.agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
+from planners.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
+from planners.partial_blockage.separate_static_lack_planner import SeparateStaticLackPlanner
 from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.partial_blockage.low_static_line_lack import LowStaticLineLacklPlanner
 from planners.planner import Planner
@@ -25,7 +28,7 @@ def run(planner: Planner):
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
     before = time.time()
-    movement, active_time, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
+    movement, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
     planning_time = time.time() - before
 
     write_report(planner=str(planner),
@@ -33,7 +36,6 @@ def run(planner: Planner):
                  num_robots=config['num_robots'],
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 active_time=active_time,
                  completion_time=completion_time,
                  planner_time=planning_time,
                  damage=expected_damage,
@@ -42,15 +44,14 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [IterativeAssignmentPlanner(),
-                KmeansAssignmentPlanner()]
+    planners = [AdditiveStaticLackPlanner()]
     # planners = [PracticalStaticLineLacklPlanner(), StaticLineLackPlanner()]
     # StaticLineLackPlanner(), PracticalStaticLineLacklPlanner(),
 
     config['num_agents'] = 200
 
     for planner in planners:
-        for v in [2, 4, 6, 8]:
+        for v in [2, 3, 4, 5, 6, 7, 8]:
             print(f'*** *** v={v} *** ***')
             for s in range(30):
                 seed(s)

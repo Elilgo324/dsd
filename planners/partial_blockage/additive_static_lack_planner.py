@@ -5,7 +5,7 @@ from utils.functions import *
 
 class AdditiveStaticLackPlanner(Planner):
     def __init__(self):
-        self.num_waves = 10
+        self.num_waves = 50
 
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
@@ -34,7 +34,7 @@ class AdditiveStaticLackPlanner(Planner):
             new_robots = [BasicRobot(cur_movement[robot][-1], fv, r) for robot in new_robots]
             new_agents = [BaseAgent(Point(agent.x, agent.y + v * completion_time), v) for agent in wave]
             new_env = Environment(robots=new_robots, agents=new_agents, border=b)
-            cur_movement, _, cur_completion_time, cur_acc_damage, cur_num_disabled = planner.plan(new_env)
+            cur_movement, cur_completion_time, cur_acc_damage, cur_num_disabled = planner.plan(new_env)
 
             for i_robot in range(len(robots)):
                 if len(cur_movement[new_robots[i_robot]]) == 0:
