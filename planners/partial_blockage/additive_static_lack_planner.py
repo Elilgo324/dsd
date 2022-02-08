@@ -5,7 +5,7 @@ from utils.functions import *
 
 class AdditiveStaticLackPlanner(Planner):
     def __init__(self):
-        self.num_waves = 50
+        self.num_waves = 100
 
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots

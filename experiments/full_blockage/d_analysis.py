@@ -32,7 +32,7 @@ def run(planner: Planner):
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
     before = time.time()
-    movement, active_time, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
+    movement, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
     planning_time = time.time() - before
 
     write_report(planner=str(planner),
@@ -40,7 +40,6 @@ def run(planner: Planner):
                  num_robots=num_robots_for_full_blockage,
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 active_time=active_time,
                  completion_time=completion_time,
                  planner_time=planning_time,
                  damage=expected_damage,
