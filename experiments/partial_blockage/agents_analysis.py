@@ -2,6 +2,7 @@ import json
 import time
 from random import seed
 
+from environment.agents.fixed_velocity_agent import FixedVelocityAgent
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
@@ -27,7 +28,7 @@ def run(planner: Planner):
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
     before = time.time()
-    movement, active_time, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
+    movement, completion_time, expected_damage, expected_num_disabled = planner.plan(env)
     planning_time = time.time() - before
 
     write_report(planner=str(planner),
@@ -35,7 +36,6 @@ def run(planner: Planner):
                  num_robots=config['num_robots'],
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 active_time=active_time,
                  completion_time=completion_time,
                  planner_time=planning_time,
                  damage=expected_damage,
@@ -46,12 +46,12 @@ def run(planner: Planner):
 if __name__ == '__main__':
     # planners = [StaticLineLackPlanner(), IterativeAssignmentPlanner()]
     # planners = [PracticalStaticLineLacklPlanner(), IterativeAssignmentPlanner(), KmeansAssignmentPlanner()]
-    planners = [AdditiveStaticLackPlanner()]
+    planners = [IterativeAssignmentPlanner(), KmeansAssignmentPlanner()]
 
     for planner in planners:
-        for v in [400, 500, 600, 700, 800]:
+        for v in [50, 100 ,200, 300, 400, 500, 600, 700, 800, 900]:
             print(f'*** *** v={v} *** ***')
-            for s in range(3):
+            for s in range(2,10):
                 seed(s)
 
                 config['num_agents'] = v

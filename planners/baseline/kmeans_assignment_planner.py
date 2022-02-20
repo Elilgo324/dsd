@@ -24,7 +24,7 @@ class KmeansAssignmentPlanner(Planner):
             clusters[label].append(agent)
 
         iterative_assignments = {robot: {i_cluster: iterative_assignment([robot], [a.clone() for a in clusters[
-            i_cluster]]) for i_cluster in range(len(clusters))} for robot in robots}
+            i_cluster]], env.border) for i_cluster in range(len(clusters))} for robot in robots}
         distances = [[iterative_assignments[robot][i_cluster]['damage']
                       for i_cluster in range(len(clusters))] for robot in robots]
 
