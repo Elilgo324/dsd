@@ -12,6 +12,7 @@ class TravelingLinePlanner(Planner):
         agents = env.agents
         movement = {robot: [] for robot in robots}
 
+        b = env.border
         v = agents[0].v
         fv = robots[0].fv
 
@@ -42,7 +43,7 @@ class TravelingLinePlanner(Planner):
         # potential lines
         H = [meeting_height(farthest_robot, BaseAgent(Point(farthest_x, agent.y), agent.v)) for agent in agents]
         makespan_per_h = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
-        trp_per_h = {h: line_trpv(h, fv, agents, makespan_per_h[h]) for h in H}
+        trp_per_h = {h: line_trpv(h, fv, agents, makespan_per_h[h], b) for h in H}
 
         def damage_score(h):
             return trp_per_h[h]['damage'] + (len(agents) * makespan_per_h[h])

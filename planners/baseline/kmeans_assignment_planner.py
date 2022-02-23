@@ -42,7 +42,7 @@ class KmeansAssignmentPlanner(Planner):
             movement[robot] = iterative_assignments[robot][i_cluster]['movement'][robot]
 
             damage += iterative_assignments[robot][i_cluster]['damage']
-            completion_time = max(completion_time, iterative_assignments[robot][i_cluster]['active_time'])
+            completion_time = max(completion_time, iterative_assignments[robot][i_cluster]['completion_time'])
             agents_disabled += iterative_assignments[robot][i_cluster]['num_disabled']
 
         return movement, completion_time, damage, agents_disabled

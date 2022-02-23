@@ -58,12 +58,12 @@ if __name__ == '__main__':
     #             SeparateTravelingPlanner(),
     #             TravelingLineSamplingPlanner(),
     #             TravelingLinePlanner()]
-    planners = [IterativeAssignmentPlanner()]
+    planners = [IterativeAssignmentPlanner(), KmeansAssignmentPlanner(), StaticLinePlanner()]
 
     for planner in planners:
-        for v in [600,700,800,900,1000]:
+        for v in [2000]:
             print(f'*** *** v={v} *** ***')
-            for s in range(10):
+            for s in range(5):
                 seed(s)
 
                 config['num_agents'] = v

@@ -121,7 +121,7 @@ def map_into_2_pows(costs: List[List[float]]) -> List[List[float]]:
     return costs
 
 
-def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
+def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float, border: float) \
         -> Dict[str, Union[float, Dict['BasicRobot', List[Point]]]]:
     v = agents[0].v
 
@@ -268,6 +268,7 @@ def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
 def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent'], border: float) \
         -> Dict[str, Union[Dict, int, float]]:
     MY_INF = 1_000_000
+    fv = robots[0].fv
 
     movement = {robot: [] for robot in robots}
     busy_time = {robot: 0 for robot in robots}
@@ -275,13 +276,11 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
     expected_num_disabled = 0
 
     # assign while there are agents alive
-    an=0
     while len(agents_copy) > 0:
-        an+=1
-        print(f'assignment number {an}')
-
         # calculate assignment costs
         distances = [[] for _ in range(len(robots))]
+        meeting_times = {robot: {agent: None for agent in agents_copy} for robot in robots}
+        meeting_points = {robot: {agent: None for agent in agents_copy} for robot in robots}
         for i in range(len(robots)):
             # updated robot
             robot_at_time = robots[i].clone()
@@ -298,8 +297,13 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
                 # if meeting outside the border, cost is inf
                 if y_meeting > border:
                     distances[i].append(MY_INF)
+                    meeting_points[robots[i]][a] = None
                 else:
-                    distances[i].append(robot_at_time.loc.distance_to(Point(x_meeting, y_meeting)))
+                    meeting_point = Point(x_meeting, y_meeting)
+                    dist = robot_at_time.loc.distance_to(meeting_point)
+                    distances[i].append(dist)
+                    meeting_times[robots[i]][a] = dist / fv
+                    meeting_points[robots[i]][a] = meeting_point
 
         # apply optimal assignment
         optimal_assignment = linear_sum_assignment(distances)
@@ -308,41 +312,27 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
 
         # update according optimal assignment
         agents_to_remove = []
-        num_escaped = 0
+        non_assigned_num = 0
         for i in range(len(assigned_robots)):
             assigned_robot = robots[assigned_robots[i]]
             assigned_agent = agents_copy[assigned_agents[i]]
-
-            robot_at_time = robots[i].clone()
-            if len(movement[robots[i]]) > 0:
-                robot_at_time.loc = movement[robots[i]][-1]
-
-            x_meeting = assigned_agent.x
-            agent_at_time = BaseAgent(Point(assigned_agent.x, assigned_agent.y
-                                            + busy_time[robots[i]] * assigned_agent.v), assigned_agent.v)
-            y_meeting = meeting_height(robot_at_time, agent_at_time)
-            meeting_point = Point(x_meeting, y_meeting)
+            meeting_point = meeting_points[assigned_robot][assigned_agent]
 
             # if meeting outside the border, continue
-            if y_meeting > border:
-                num_escaped += 1
+            if meeting_point is None:
+                non_assigned_num += 1
                 continue
 
             # else, update values
-            prev_loc = assigned_robot.loc
-            if len(movement[assigned_robot]) > 0:
-                prev_loc = movement[assigned_robot][-1]
-
             movement[assigned_robot].append(meeting_point)
-            busy_time[assigned_robot] += prev_loc.distance_to(meeting_point) / assigned_robot.fv
+            busy_time[assigned_robot] += meeting_times[assigned_robot][assigned_agent]
 
             expected_damage += busy_time[assigned_robot]
-            print(expected_damage)
             expected_num_disabled += 1
-            agents_to_remove.append(agents_copy[i])
+            agents_to_remove.append(assigned_agent)
 
-        if num_escaped == len(assigned_agents):
-            print(num_escaped)
+        if non_assigned_num == len(assigned_agents):
+            expected_damage += sum([border - a.y for a in agents_copy])
             break
 
         for a in agents_to_remove:

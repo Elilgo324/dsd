@@ -46,10 +46,10 @@ def run(planner: Planner):
 if __name__ == '__main__':
     # planners = [StaticLineLackPlanner(), IterativeAssignmentPlanner()]
     # planners = [PracticalStaticLineLacklPlanner(), IterativeAssignmentPlanner(), KmeansAssignmentPlanner()]
-    planners = [AdditiveStaticLackPlanner()]
+    planners = [KmeansAssignmentPlanner()]
 
     for planner in planners:
-        for v in [400, 500, 600, 700, 800]:
+        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800]:
             print(f'*** *** v={v} *** ***')
             for s in range(3):
                 seed(s)
