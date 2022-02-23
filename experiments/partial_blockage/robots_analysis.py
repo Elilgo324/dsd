@@ -52,7 +52,8 @@ if __name__ == '__main__':
     config['num_agents'] = 300
 
     for planner in planners:
-        for v in [6, 7, 8, 5]:
+        # for v in [2, 3, 4, 5, 6, 7, 8]:
+        for v in [3, 4, 5, 6, 7, 8]:
             print(f'*** *** v={v} *** ***')
             for s in range(10):
                 seed(s)

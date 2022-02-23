@@ -3,7 +3,7 @@ import time
 from math import ceil
 from random import seed
 
-from environment.agents.fixed_velocity_agent import FixedVelocityAgenti
+from environment.agents.fixed_velocity_agent import FixedVelocityAgent, FixedVelocityAgent
 from planners.full_blockage.high_traveling_line_planner import HighTravelingLinePlanner
 from planners.full_blockage.separate_static_planner import SeparateStaticPlanner
 from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
@@ -58,10 +58,10 @@ if __name__ == '__main__':
     #             SeparateTravelingPlanner(),
     #             TravelingLineSamplingPlanner(),
     #             TravelingLinePlanner()]
-    planners = [TravelingLinePlanner()]
+    planners = [IterativeAssignmentPlanner()]
 
     for planner in planners:
-        for v in [500, 600, 700, 800, 900, 1000]:
+        for v in [600,700,800,900,1000]:
             print(f'*** *** v={v} *** ***')
             for s in range(10):
                 seed(s)
