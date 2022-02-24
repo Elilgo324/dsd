@@ -11,6 +11,7 @@ class BottomUpScannerPlanner(Planner):
         agents = [a.clone() for a in env.agents]
         agents = sorted(agents, key=lambda a: a.y)
 
+        b = env.border
         v = agents[0].v
         fv = robots[0].fv
         r = robots[0].r
@@ -48,7 +49,8 @@ class BottomUpScannerPlanner(Planner):
 
         movement = {robot: [Point(optimal_x[robot], construction_height)] for robot in robots}
         completion_time = makespan
-        acc_damage = completion_time * len(agents) * v
+        potential_damage = sum([b - agent.y for agent in agents])
+        avoided_damage = b - agents[0].y
         num_disabled = 1
 
         prev_height = construction_height
@@ -56,16 +58,21 @@ class BottomUpScannerPlanner(Planner):
             agent = agents[i_agent]
             meeting_h = meeting_height(BasicRobot(loc=Point(0, construction_height), r=r, fv=fv),
                                        BaseAgent(loc=Point(0, agent.y + makespan * v), v=v))
+            if meeting_h > b:
+                break
+
             cur_completion_time = (meeting_h - prev_height) / fv
             prev_height = meeting_h
             for robot in robots:
                 movement[robot].append(Point(optimal_x[robot], meeting_h))
 
             completion_time += cur_completion_time
-            acc_damage += (len(agents) - i_agent - 1) * cur_completion_time * v
+            avoided_damage += b - meeting_h
+            print(avoided_damage)
             num_disabled += 1
 
-        return movement, completion_time, acc_damage, num_disabled
+        expected_damage = potential_damage - avoided_damage
+        return movement, completion_time, expected_damage, num_disabled
 
     def __str__(self):
         return 'BottomUpScannerPlanner'

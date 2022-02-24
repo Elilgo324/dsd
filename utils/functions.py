@@ -121,7 +121,7 @@ def map_into_2_pows(costs: List[List[float]]) -> List[List[float]]:
     return costs
 
 
-def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float, border: float) \
+def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
         -> Dict[str, Union[float, Dict['BasicRobot', List[Point]]]]:
     v = agents[0].v
 
@@ -256,7 +256,7 @@ def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float, b
             idx_y += 1
             idx_x -= 1
 
-    # compare the bottow right cells of the tables
+    # compare the bottom right cells of the tables
     damage_up = XY[X[-1]][Y[-1]]['damage']
     damage_down = YX[Y[-1]][X[-1]]['damage']
 
@@ -272,8 +272,9 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
 
     movement = {robot: [] for robot in robots}
     busy_time = {robot: 0 for robot in robots}
-    expected_damage = 0
+    avoided_damage = 0
     expected_num_disabled = 0
+    potential_damage = sum([border - a.y for a in agents_copy])
 
     # assign while there are agents alive
     while len(agents_copy) > 0:
@@ -327,17 +328,17 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             movement[assigned_robot].append(meeting_point)
             busy_time[assigned_robot] += meeting_times[assigned_robot][assigned_agent]
 
-            expected_damage += busy_time[assigned_robot]
+            avoided_damage += (border - meeting_point.y)
             expected_num_disabled += 1
             agents_to_remove.append(assigned_agent)
 
         if non_assigned_num == len(assigned_agents):
-            expected_damage += sum([border - a.y for a in agents_copy])
             break
 
         for a in agents_to_remove:
             agents_copy.remove(a)
 
+    expected_damage = potential_damage - avoided_damage
     completion_time = max(busy_time.values())
     return {'movement': movement,
             'completion_time': completion_time,

@@ -61,7 +61,7 @@ if __name__ == '__main__':
     planners = [IterativeAssignmentPlanner(), KmeansAssignmentPlanner(), StaticLinePlanner()]
 
     for planner in planners:
-        for v in [2000]:
+        for v in [50,100,200,300,400,500,600,700,800,900,1000]:
             print(f'*** *** v={v} *** ***')
             for s in range(5):
                 seed(s)

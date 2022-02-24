@@ -51,19 +51,12 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StaticLinePlanner(),
-                IterativeAssignmentPlanner(),
-                KmeansAssignmentPlanner(),
-                LowTravelingLinePlanner(),
-                SeparateTravelingPlanner(),
-                TravelingLinePlanner()]
-    planners = [BottomUpScannerPlanner(), TopDownScannerPlanner(), IterativeAssignmentPlanner(),
-                SeparateTravelingPlanner()]
+    planners = [BottomUpScannerPlanner()]
 
     config['num_agents'] = 300
 
     for planner in planners:
-        for v in [2.5, 3, 3.5, 4]:
+        for v in [1.1, 1.3, 1.5, 1.7, 2]:
             print(f'*** *** v={v} *** ***')
             for s in range(10):
                 seed(s)

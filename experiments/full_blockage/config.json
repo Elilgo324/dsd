@@ -6,6 +6,6 @@
   "y_buffer": 10,
   "num_agents": 200,
   "agent_speed": 1,
-  "robot_speed": 2,
+  "robot_speed": 1.3,
   "disablement_range": 5
 }
