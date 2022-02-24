@@ -68,7 +68,6 @@ class BottomUpScannerPlanner(Planner):
 
             completion_time += cur_completion_time
             avoided_damage += b - meeting_h
-            print(avoided_damage)
             num_disabled += 1
 
         expected_damage = potential_damage - avoided_damage
