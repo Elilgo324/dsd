@@ -67,7 +67,7 @@ class Environment:
 
         # check disablement and escaped
         for agent in self.agents:
-            if agent.y > self._border:
+            if agent.y > self._border + 0.5:
                 self.agents.remove(agent)
                 self._agents_escaped += 1
                 print('agent escaped')
@@ -83,6 +83,7 @@ class Environment:
                 # thus the 1.5 factor which is greater than sqrt(2 range^2)
                 if agent.loc.distance_to(robot.loc) <= 1.4 * robot.r:
                     self.agents.remove(agent)
+                    robot.set_stop(False)
                     self._agents_disabled += 1
                     print('agent disabled')
                     break

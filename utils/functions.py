@@ -26,10 +26,6 @@ def meeting_height(robot: BasicRobot, agent: BaseAgent) -> float:
     f = robot.fv / agent.v
     a, b = robot.x, robot.y
     c, d = agent.x, agent.y
-
-    if math.isclose(a, c) and math.isclose(b, d):
-        return b
-
     inside_sqrt = a ** 2 * f ** 2 - a ** 2 - 2 * a * c * f ** 2 + 2 * a * c \
                   + b ** 2 * f ** 2 - 2 * b * d * f ** 2 + c ** 2 * f ** 2 - c ** 2 + d ** 2 * f ** 2
     num = sqrt(inside_sqrt) - b + d * f ** 2
@@ -265,81 +261,53 @@ def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
     return YX[Y[-1]][X[-1]]
 
 
-def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent'], border: float) \
+def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent']) \
         -> Dict[str, Union[Dict, int, float]]:
-    MY_INF = 1_000_000
-    fv = robots[0].fv
-
     movement = {robot: [] for robot in robots}
-    busy_time = {robot: 0 for robot in robots}
-    avoided_damage = 0
+    free_time = {robot: 0 for robot in robots}
+    expected_damage = 0
     expected_num_disabled = 0
-    potential_damage = sum([border - a.y for a in agents_copy])
 
-    # assign while there are agents alive
     while len(agents_copy) > 0:
-        # calculate assignment costs
         distances = [[] for _ in range(len(robots))]
-        meeting_times = {robot: {agent: None for agent in agents_copy} for robot in robots}
-        meeting_points = {robot: {agent: None for agent in agents_copy} for robot in robots}
         for i in range(len(robots)):
-            # updated robot
-            robot_at_time = robots[i].clone()
-            if len(movement[robots[i]]) > 0:
-                robot_at_time.loc = movement[robots[i]][-1]
-
             for a in agents_copy:
-                # updated agent
-                agent_at_time = BaseAgent(Point(a.x, a.y + busy_time[robots[i]] * a.v), a.v)
+                robot_at_time = robots[i].clone()
+                if len(movement[robots[i]]) > 0:
+                    robot_at_time.loc = movement[robots[i]][-1]
 
                 x_meeting = a.x
+                agent_at_time = BaseAgent(Point(a.x, a.y + free_time[robots[i]] * a.v), a.v)
                 y_meeting = meeting_height(robot_at_time, agent_at_time)
+                distances[i].append(robot_at_time.loc.distance_to(Point(x_meeting, y_meeting)))
 
-                # if meeting outside the border, cost is inf
-                if y_meeting > border:
-                    distances[i].append(MY_INF)
-                    meeting_points[robots[i]][a] = None
-                else:
-                    meeting_point = Point(x_meeting, y_meeting)
-                    dist = robot_at_time.loc.distance_to(meeting_point)
-                    distances[i].append(dist)
-                    meeting_times[robots[i]][a] = dist / fv
-                    meeting_points[robots[i]][a] = meeting_point
-
-        # apply optimal assignment
         optimal_assignment = linear_sum_assignment(distances)
         assigned_robots = optimal_assignment[0]
         assigned_agents = optimal_assignment[1]
 
-        # update according optimal assignment
-        agents_to_remove = []
-        non_assigned_num = 0
         for i in range(len(assigned_robots)):
             assigned_robot = robots[assigned_robots[i]]
             assigned_agent = agents_copy[assigned_agents[i]]
-            meeting_point = meeting_points[assigned_robot][assigned_agent]
 
-            # if meeting outside the border, continue
-            if meeting_point is None:
-                non_assigned_num += 1
-                continue
-
-            # else, update values
-            movement[assigned_robot].append(meeting_point)
-            busy_time[assigned_robot] += meeting_times[assigned_robot][assigned_agent]
-
-            avoided_damage += (border - meeting_point.y)
+            expected_damage += free_time[assigned_robot]
             expected_num_disabled += 1
-            agents_to_remove.append(assigned_agent)
 
-        if non_assigned_num == len(assigned_agents):
-            break
+            prev_loc = assigned_robot.loc
+            if len(movement[assigned_robot]) > 0:
+                prev_loc = movement[assigned_robot][-1]
 
+            x_meeting = assigned_agent.x
+            y_meeting = meeting_height(assigned_robot, assigned_agent)
+            meeting_point = Point(x_meeting, y_meeting)
+
+            movement[assigned_robot].append(meeting_point)
+            free_time[assigned_robot] += prev_loc.distance_to(meeting_point) / assigned_robot.fv
+
+        agents_to_remove = [agents_copy[i] for i in assigned_agents]
         for a in agents_to_remove:
             agents_copy.remove(a)
 
-    expected_damage = potential_damage - avoided_damage
-    completion_time = max(busy_time.values())
+    completion_time = max(free_time.values())
     return {'movement': movement,
             'completion_time': completion_time,
             'damage': expected_damage,

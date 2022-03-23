@@ -43,7 +43,7 @@ class TravelingLinePlanner(Planner):
         # potential lines
         H = [meeting_height(farthest_robot, BaseAgent(Point(farthest_x, agent.y), agent.v)) for agent in agents]
         makespan_per_h = {h: farthest_robot.loc.distance_to(Point(farthest_x, h)) / fv for h in H}
-        trp_per_h = {h: line_trpv(h, fv, agents, makespan_per_h[h], b) for h in H}
+        trp_per_h = {h: line_trpv(h, fv, agents, makespan_per_h[h]) for h in H}
 
         def damage_score(h):
             return trp_per_h[h]['damage'] + (len(agents) * makespan_per_h[h])
@@ -55,11 +55,21 @@ class TravelingLinePlanner(Planner):
 
         optimal_y = [h_opt] + trp_per_h[h_opt]['ys']
 
+        # refined_optimal_y = []
+        # for j in range(len(optimal_y)):
+        #     if 0 < j < len(optimal_y) - 1 and optimal_y[j - 1] < optimal_y[j] < optimal_y[j + 1]:
+        #         continue
+        #     refined_optimal_y.append(optimal_y[j])
+        # optimal_y = refined_optimal_y
+
         # add trp movement
         for i in range(len(optimal_assignment[0])):
             assigned_robot = robots[optimal_assignment[0][i]]
             for y in optimal_y:
                 movement[assigned_robot].append(Point(optimal_x[assigned_robot], y))
+
+        # for robot in robots:
+        #     robot.set_wait_time(makespan_per_h[h_opt])
 
         return movement, \
                trp_per_h[h_opt]['t'] + makespan_per_h[h_opt], \

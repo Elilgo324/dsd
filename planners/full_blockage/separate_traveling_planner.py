@@ -71,8 +71,17 @@ class SeparateTravelingPlanner(Planner):
         for i_robot in range(len(optimal_assignment[0])):
             assigned_robot = robots[i_robot]
             i_bucket = optimal_assignment[1][i_robot]
+
+            optimal_y = trp_data_per_robot_bucket[i_robot][i_bucket]['ys']
+            refined_optimal_y = []
+            for j in range(len(optimal_y)):
+                if 0 < j < len(optimal_y) - 1 and optimal_y[j - 1] < optimal_y[j] < optimal_y[j + 1]:
+                    continue
+                refined_optimal_y.append(optimal_y[j])
+            optimal_y = refined_optimal_y
+
             movement[assigned_robot] = \
-                [Point(opt_x[i_bucket], y) for y in trp_data_per_robot_bucket[i_robot][i_bucket]['ys']]
+                [Point(opt_x[i_bucket], y) for y in optimal_y]
 
             num_disabled += len(movement[assigned_robot])
             completion_time = max(completion_time, trp_data_per_robot_bucket[i_robot][i_bucket]['t'])

@@ -1,11 +1,15 @@
 import json
 from math import ceil
+from random import seed
 
 from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.robots.first_waiting_robot import FirstWaitingRobot
 from planners.full_blockage.bottom_up_scanner_line_planner import BottomUpScannerPlanner
 from planners.full_blockage.high_traveling_line_planner import HighTravelingLinePlanner
 from planners.full_blockage.separate_static_planner import SeparateStaticPlanner
+from planners.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
 from planners.full_blockage.static_line_planner import StaticLinePlanner
+from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.planner import Planner
 from utils.functions import *
 
@@ -22,8 +26,8 @@ def run(planner: Planner):
     x_max = max([a.x for a in agents])
 
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
-    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], has_mode=True)
+    robots = [FirstWaitingRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
+                                config['robot_speed'], config['disablement_range'], has_mode=True)
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
@@ -46,8 +50,9 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
+    seed(39)
     # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
-    planners = [HighTravelingLinePlanner() for _ in range(1)]
+    planners = [SeparateTravelingPlanner() for _ in range(1)]
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)
