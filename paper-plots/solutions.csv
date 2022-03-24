@@ -1,12 +1,9 @@
 Planner,Scenario,Comlexity,Description
-StaticLine,full-blockage,k^3+nlogn,optimal assignment on a blocking line
-TravelingLine,full-blockage,k^3+n^3,TRP based blocking line
-ScannerLine,full-blockage,k^3+n,a bottom-up or top-down scanner movement
-PracticalTraveling,full-blockage,TravelingLine/ScannerLine,start with TravelingLine and then ScannerLine
-SeparateTraveling,full-blockage,kn^3+k^3,TravelingLine in buckets
-StaticLineLack,partial-blockage,-,flow-based moves on a static line
-PracticalStaticLineLack,partial-blockage,-,StaticLineLack considering only lowest agents
-SeparateStaticLack,partial-blockage,-,StaticLineLack in buckets
-AdditiveStaticLack,partial-blockage,-,StaticLineLack in waves
-IterativeAssignment,baseline (both),-,iterative optimal assignment
-KmeansAssignment,baseline (both),-,iterative optimal assignment inside clusters
+StaticLine,full-blockage,k^3+n^2,optimal assignment on a full static line
+TravelingLine,full-blockage,k^3+n^3,a full line with optimal traveling
+SeparateTraveling,full-blockage,k^2n^3+k^3,TravelingLine in separate buckets
+StaticLineLack,partial-blockage,knVE^2,a static line with optimal movements on it
+SeparateStaticLack,partial-blockage,k^2n*flow,StaticLineLack in separate buckets
+AdditiveStaticLack,partial-blockage,-,StaticLineLack on separate agent groups
+IterativeAssignment,both,n^4/k+k^2,iterative optimal assignment
+KmeansAssignment,both,clustering+k^3+n,clusters assignment
