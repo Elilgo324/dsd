@@ -9,6 +9,7 @@ from typing import List, Tuple, Dict, Union
 import matplotlib.pyplot as plt
 import imageio
 import networkx as nx
+import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 from environment.agents.base_agent import BaseAgent
@@ -419,3 +420,107 @@ def flow_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
 
     return {'movement': movement,
             'disabled': disabled}
+
+def stochastic_flow_moves(robots: List['BasicRobot'], row: float, RUM):
+    RUR = RUM[:,row,:]
+    T, n_cols = RUR.shape
+
+    g = nx.DiGraph()
+
+    # create robots
+    for robot in robots:
+        g.add_node(str(robot), pos=np.array([robot.x, robot.y]), color='blue')
+
+    # create utility cells
+    for t in range(T):
+        for c in range(n_cols):
+            g.add_node(f'[{t},{c}]_i', pos=np.array([c, 4 + 5 * t]), color='red')
+            g.add_node(f'[{t},{c}]_o', pos=np.array([c, 4 + 5 * t + 2]), color='red')
+            # the weight needs to be an integer
+            g.add_edge(f'[{t},{c}]_i', f'[{t},{c}]_o', weight=-int(100*RUR[t,c]), capacity=1)
+
+    # add edges between cells
+    for t in range(T-1):
+        g.add_edge(f'[{t},{0}]_o',f'[{t+1},{0}]_i', weight=0, capacity=len(robots))
+        g.add_edge(f'[{t},{0}]_o',f'[{t+1},{1}]_i', weight=0, capacity=len(robots))
+
+        g.add_edge(f'[{t},{0}]_i',f'[{t+1},{0}]_i', weight=0, capacity=len(robots))
+        g.add_edge(f'[{t},{0}]_i',f'[{t+1},{1}]_i', weight=0, capacity=len(robots))
+
+        g.add_edge(f'[{t},{n_cols-1}]_o',f'[{t+1},{n_cols-1}]_i', weight=0, capacity=len(robots))
+        g.add_edge(f'[{t},{n_cols-1}]_o',f'[{t+1},{n_cols-2}]_i', weight=0, capacity=len(robots))
+
+        g.add_edge(f'[{t},{n_cols-1}]_i',f'[{t+1},{n_cols-1}]_i', weight=0, capacity=len(robots))
+        g.add_edge(f'[{t},{n_cols-1}]_i',f'[{t+1},{n_cols-2}]_i', weight=0, capacity=len(robots))
+
+        for c in range(1,n_cols-1):
+            g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c-1}]_i', weight=0, capacity=len(robots))
+            g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c}]_i', weight=0, capacity=len(robots))
+            g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c+1}]_i', weight=0, capacity=len(robots))
+
+            g.add_edge(f'[{t},{c}]_i',f'[{t+1},{c-1}]_i', weight=0, capacity=len(robots))
+            g.add_edge(f'[{t},{c}]_i',f'[{t+1},{c}]_i', weight=0, capacity=len(robots))
+            g.add_edge(f'[{t},{c}]_i',f'[{t+1},{c+1}]_i', weight=0, capacity=len(robots))
+
+    # for each column and robot, add edge corresponding to the arrival time
+    for robot in robots:
+        for c in range(n_cols):
+            arrival_time = int(Point(c, row).distance_to(robot.loc) / robot.fv)
+            g.add_edge(str(robot),f'[{arrival_time},{c}]_i', weight=0, capacity=1)
+
+    # add dummy source and target to use flow
+    g.add_node('s', pos=np.array([2, -2]), color='orange')
+    g.add_node('t', pos=np.array([2, 5 * T + 4]), color='orange')
+
+    for robot in robots:
+        g.add_edge('s', str(robot), weight=0, capacity=1)
+
+    for c in range(n_cols):
+        g.add_edge(f'[{T-1},{c}]_o','t', weight=0, capacity=len(robots))
+        g.add_edge(f'[{T-1},{c}]_i','t', weight=0, capacity=len(robots))
+
+    # plt.xlim([0, 20])
+    # plt.ylim([0, 20])
+    plt.figure(3,figsize=(10,14))
+    edge_labels = {k: v/100 for k, v in nx.get_edge_attributes(g,'weight').items() if v != 0}
+    pos = nx.get_node_attributes(g,'pos')
+
+    flow = nx.max_flow_min_cost(g, 's', 't')
+
+    # delete all edges without flow
+    edges_to_delete = []
+    for key1, val1 in flow.items():
+        for key2, val2 in val1.items():
+            if val2 == 0:
+                edges_to_delete.append((key1, key2))
+    for key1, key2 in edges_to_delete:
+        g.remove_edge(key1, key2)
+
+    # calc movement and disabled
+    movement = {robot: [] for robot in robots}
+    agents_names_to_agents = {str(agent) + '_o': agent for agent in agents}
+    disabled = []
+    for robot in robots:
+        robot_name = str(robot)
+        next = list(g.successors(robot_name))[0]
+        while next != 't':
+            if next[-1] == 'i':
+                next = list(g.successors(next))[0]
+            agent = agents_names_to_agents[next]
+            disabled.append(agent)
+            movement[robot].append(Point(agent.x, h))
+            next = list(g.successors(next))[0]
+
+    return -sum(nx.get_edge_attributes(g,'weight').values())/100
+
+
+def calculate_Ua(agent: BaseAgent):
+    pass
+
+
+def calculate_UA(agents: List[BaseAgent]):
+    pass
+
+
+def calculate_UR(agents: List[BaseAgent]):
+    pass
