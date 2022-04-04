@@ -23,7 +23,7 @@ class LowStaticLineLacklPlanner(Planner):
 
         H = [meeting_height(robot, agent) for agent in agents for robot in robots]
 
-        flow_per_h = {h: flow_moves(robots, agents, h) for h in H}
+        flow_per_h = {h: static_lack_moves(robots, agents, h) for h in H}
         disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
         movement_per_h = {h: flow_per_h[h]['movement'] for h in H}
 

@@ -1,8 +1,10 @@
 import math
 
 from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.agents.stochastic_agent import StochasticAgent
 from environment.robots.basic_robot import BasicRobot
-from utils.functions import meeting_height, line_trpv, map_into_2_pows, flow_moves
+from environment.stochastic_environment import StochasticEnvironment
+from utils.functions import meeting_height, line_trpv, map_into_2_pows, static_lack_moves, show_grid
 from utils.point import Point
 
 
@@ -145,19 +147,37 @@ def test_flow_moves():
 
     robots = [BasicRobot(Point(-1, 9), 2, 1), BasicRobot(Point(3, 8), 2, 1)]
 
-    fm = flow_moves(robots, agents, 10)
+    fm = static_lack_moves(robots, agents, 10)
     movement, disabled = fm['movement'], fm['disabled']
 
     assert movement[robots[0]] == [Point(-6, 10)]
     assert movement[robots[1]] == [Point(10, 10), Point(8, 10)]
     assert set(disabled) == set(agents[1:])
 
+def test_U_generation():
+    b, br = 10, 10
+    advance_distribution = (0.2, 0.6, 0.2)
+
+    agents = [StochasticAgent(Point(3, 2), 1, advance_distribution),
+              StochasticAgent(Point(5, 2), 1, advance_distribution),
+              StochasticAgent(Point(6, 8), 1, advance_distribution),
+              StochasticAgent(Point(8, 4), 1, advance_distribution)]
+
+    robots = [BasicRobot(Point(1, 1), 2, 1),
+              BasicRobot(Point(2, 0), 2, 1),
+              BasicRobot(Point(4, 1), 2, 1)]
+
+    environment = StochasticEnvironment(agents=agents, robots=robots, top_border=b, left_border=0, right_border=br)
+
+    U = environment.generate_U()
+    show_grid(U[2])
 
 if __name__ == '__main__':
-    test_direction()
-    test_shifted()
-    test_distance()
-    test_meeting_height()
-    test_line_trpv()
-    test_map_into_2_pows()
-    test_flow_moves()
+    # test_direction()
+    # test_shifted()
+    # test_distance()
+    # test_meeting_height()
+    # test_line_trpv()
+    # test_map_into_2_pows()
+    # test_flow_moves()
+    test_U_generation()

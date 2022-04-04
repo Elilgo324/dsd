@@ -1,27 +1,27 @@
 import json
 
 from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.agents.stochastic_agent import StochasticAgent
+from environment.stochastic_environment import StochasticEnvironment
 from planners.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
 from planners.planner import Planner
-from planners.stochastic_movement.stochastic_static_lack import StochasticStaticLackPlanner
+from planners.stochastic_movement.stochastic_static_lack_planner import StochasticStaticLackPlanner
 from utils.functions import *
 
-with open('./config.json') as json_file:
+with open('./dev_config.json') as json_file:
     config = json.load(json_file)
 
 
 def run(planner: Planner) -> None:
-    agents = [FixedVelocityAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
+    agents = [StochasticAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
                                               config['y_buffer'], config['y_buffer'] + config['y_size_init']),
-                                 config['agent_speed']) for _ in range(config['num_agents'])]
+                                 config['agent_speed'], config['advance_distribution']) for _ in range(config['num_agents'])]
 
-    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
+    robots = [BasicRobot(sample_point(config['x_buffer'], config['x_size'] + config['x_buffer'], config['y_buffer'], config['y_buffer'] + config['y_size']),
                          config['robot_speed'], config['disablement_range'], has_mode=True)
               for _ in range(config['num_robots'])]
 
-    advance_distribution = config['advance_distribution']
-
-    env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
+    env = StochasticEnvironment(agents=agents, robots=robots, top_border=config['y_size']+config['y_buffer'], right_border=config['x_size'] + config['x_buffer'], left_border=config['x_buffer'])
 
     movement, _, _, _ = planner.plan(env)
 

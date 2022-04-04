@@ -6,6 +6,7 @@ from math import sqrt, floor
 from random import uniform
 from typing import List, Tuple, Dict, Union
 
+import seaborn as sb
 import matplotlib.pyplot as plt
 import imageio
 import networkx as nx
@@ -347,7 +348,7 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             'num_disabled': expected_num_disabled}
 
 
-def flow_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
+def static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
     v = agents[0].v
     fv = robots[0].fv
 
@@ -421,23 +422,24 @@ def flow_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
     return {'movement': movement,
             'disabled': disabled}
 
-def stochastic_flow_moves(robots: List['BasicRobot'], row: float, RUM):
-    RUR = RUM[:,row,:]
-    T, n_cols = RUR.shape
+def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U):
+    R = U[:,row,:]
+    T, n_cols = R.shape
+    f = robots[0].fv
 
     g = nx.DiGraph()
 
     # create robots
     for robot in robots:
-        g.add_node(str(robot), pos=np.array([robot.x, robot.y]), color='blue')
+        g.add_node(str(robot), color='blue')
 
     # create utility cells
     for t in range(T):
         for c in range(n_cols):
-            g.add_node(f'[{t},{c}]_i', pos=np.array([c, 4 + 5 * t]), color='red')
-            g.add_node(f'[{t},{c}]_o', pos=np.array([c, 4 + 5 * t + 2]), color='red')
+            g.add_node(f'[{t},{c}]_i', movement=Point(c, row), color='red')
+            g.add_node(f'[{t},{c}]_o', color='red')
             # the weight needs to be an integer
-            g.add_edge(f'[{t},{c}]_i', f'[{t},{c}]_o', weight=-int(100*RUR[t,c]), capacity=1)
+            g.add_edge(f'[{t},{c}]_i', f'[{t},{c}]_o', weight=-int(100*R[t,c]), capacity=1)
 
     # add edges between cells
     for t in range(T-1):
@@ -465,12 +467,12 @@ def stochastic_flow_moves(robots: List['BasicRobot'], row: float, RUM):
     # for each column and robot, add edge corresponding to the arrival time
     for robot in robots:
         for c in range(n_cols):
-            arrival_time = int(Point(c, row).distance_to(robot.loc) / robot.fv)
+            arrival_time = int(Point(c * f, row * f).distance_to(robot.loc) / robot.fv)
             g.add_edge(str(robot),f'[{arrival_time},{c}]_i', weight=0, capacity=1)
 
     # add dummy source and target to use flow
-    g.add_node('s', pos=np.array([2, -2]), color='orange')
-    g.add_node('t', pos=np.array([2, 5 * T + 4]), color='orange')
+    g.add_node('s', color='orange')
+    g.add_node('t', color='orange')
 
     for robot in robots:
         g.add_edge('s', str(robot), weight=0, capacity=1)
@@ -479,11 +481,7 @@ def stochastic_flow_moves(robots: List['BasicRobot'], row: float, RUM):
         g.add_edge(f'[{T-1},{c}]_o','t', weight=0, capacity=len(robots))
         g.add_edge(f'[{T-1},{c}]_i','t', weight=0, capacity=len(robots))
 
-    # plt.xlim([0, 20])
-    # plt.ylim([0, 20])
-    plt.figure(3,figsize=(10,14))
     edge_labels = {k: v/100 for k, v in nx.get_edge_attributes(g,'weight').items() if v != 0}
-    pos = nx.get_node_attributes(g,'pos')
 
     flow = nx.max_flow_min_cost(g, 's', 't')
 
@@ -496,31 +494,37 @@ def stochastic_flow_moves(robots: List['BasicRobot'], row: float, RUM):
     for key1, key2 in edges_to_delete:
         g.remove_edge(key1, key2)
 
+    nodes_pos = nx.get_node_attributes(g, 'movement')
+
     # calc movement and disabled
     movement = {robot: [] for robot in robots}
-    agents_names_to_agents = {str(agent) + '_o': agent for agent in agents}
-    disabled = []
     for robot in robots:
         robot_name = str(robot)
         next = list(g.successors(robot_name))[0]
         while next != 't':
             if next[-1] == 'i':
-                next = list(g.successors(next))[0]
-            agent = agents_names_to_agents[next]
-            disabled.append(agent)
-            movement[robot].append(Point(agent.x, h))
+                print(nodes_pos[next])
+                movement[robot].append(nodes_pos[next])
             next = list(g.successors(next))[0]
 
-    return -sum(nx.get_edge_attributes(g,'weight').values())/100
+    utility = -sum(nx.get_edge_attributes(g,'weight').values())/100
 
+    return {'movement': movement, 'utility': utility}
 
-def calculate_Ua(agent: BaseAgent):
+def monotonic_lack_moves():
     pass
 
+def show_grid(M):
+    min_val = np.min(M)
+    max_val = np.max(M)
+    sum_val = np.sum(M)
 
-def calculate_UA(agents: List[BaseAgent]):
-    pass
+    M = np.flipud(M)
+    fig, ax = plt.subplots(figsize=(20,6))
+    sb.heatmap(M, annot=True, fmt=".2f", cmap='Blues', vmin=np.min(M), vmax=np.max(M), cbar_kws={"shrink": .8})
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.show()
 
-
-def calculate_UR(agents: List[BaseAgent]):
-    pass
+    print(f'sum of mat cells: {sum_val}')
+    print(f'max value is: {max_val}')
+    print(f'min value is: {min_val}')

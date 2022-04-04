@@ -48,7 +48,7 @@ class SeparateStaticLackPlanner(Planner):
                     continue
 
                 H = [meeting_height(robot, agent) for agent in bucket]
-                flow_per_h = {h: flow_moves([robot], bucket, h) for h in H}
+                flow_per_h = {h: static_lack_moves([robot], bucket, h) for h in H}
 
                 def damage_score(h):
                     non_escaping = flow_per_h[h]['disabled']

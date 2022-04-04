@@ -13,7 +13,7 @@ class StaticLineLackPlanner(Planner):
         if len(H) == 0:
             return {robot: [robot.loc] for robot in robots}, 0, sum([b - agent.y for agent in agents]), 0
 
-        flow_per_h = {h: flow_moves(robots, agents, h) for h in H}
+        flow_per_h = {h: static_lack_moves(robots, agents, h) for h in H}
         disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
         movement_per_h = {h: flow_per_h[h]['movement'] for h in H}
 

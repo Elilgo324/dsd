@@ -1,35 +1,20 @@
 from copy import deepcopy
 from typing import List, Tuple, Union
 
-from environment.agents.base_agent import BaseAgent
+import numpy as np
+
+from environment.environment import Environment
 from environment.robots.basic_robot import BasicRobot
+from environment.agents.stochastic_agent import StochasticAgent
 
 
-class StochasticEnvironment:
-    def __init__(self, robots: List[BasicRobot], agents: List[BaseAgent], top_border: int,
-                 left_border: int, right_border: int, advance_distribution=None):
-        self._agents = agents
-        self._robots = robots
+class StochasticEnvironment(Environment):
+    def __init__(self, robots: List[BasicRobot], agents: List[StochasticAgent], top_border: int, left_border: int,
+                 right_border: int):
+        super().__init__(robots, agents, top_border)
         self._top_border = top_border
         self._left_border = left_border
         self._right_border = right_border
-        self._acc_damage = 0
-        self._step = 0
-        self._agents_disabled = 0
-        self._agents_escaped = 0
-        self._advance_distribution = advance_distribution
-
-    @property
-    def advance_distribution(self) -> Tuple[float, float, float]:
-        return self._advance_distribution
-
-    @property
-    def robots(self) -> List[BasicRobot]:
-        return self._robots
-
-    @property
-    def agents(self) -> List[BaseAgent]:
-        return self._agents
 
     @property
     def top_border(self) -> int:
@@ -43,70 +28,63 @@ class StochasticEnvironment:
     def right_border(self) -> int:
         return self._right_border
 
-    @property
-    def step(self) -> int:
-        return self._step
+    def generate_PA(self):
+        left, up, right = self.agents[0].advance_distribution
 
-    @property
-    def acc_damage(self) -> float:
-        return self._acc_damage
+        # init 3d matrix of grid rows, cols and time
+        PA = np.zeros((self.top_border, self.top_border, self.right_border))
 
-    @property
-    def agents_disabled(self) -> float:
-        return self._agents_disabled
-
-    @property
-    def agents_escaped(self) -> float:
-        return self._agents_escaped
-
-    def clone_robots(self) -> List[BasicRobot]:
-        return deepcopy(self._robots)
-
-    def clone_agents(self) -> List[BaseAgent]:
-        return deepcopy(self._agents)
-
-    def get_robot_i(self, i: int) -> BasicRobot:
-        return self.robots[i]
-
-    def advance(self) -> bool:
-        if self._step % 10 == 0:
-            print(f'step {self._step}')
-
-        self._step += 1
-
-        for robot in self.robots:
-            robot.advance()
-
+        # in t=0 we have prob. 1 of being in the initial loc
         for agent in self.agents:
-            agent.advance()
-            self._acc_damage += agent.v
+            PA[0][int(agent.y)][int(agent.x)] = 1
 
-        # check disablement and escaped
-        for agent in self.agents:
-            if agent.y > self._top_border:
-                self.agents.remove(agent)
-                self._agents_escaped += 1
-                print('agent escaped')
-                break
+        # filling the rest times by dp
+        T = int(self.top_border)
+        num_rows = int(self.top_border)
+        num_cols = int(self.right_border)
 
-            for robot in self.robots:
-                # if robot does not disable
-                if not robot.is_disabling:
-                    continue
+        for t in range(1, T):
+            # fill the rows by dp
+            for row in range(1, num_rows):
+                # handle extreme cells
+                PA[t][row][0] = (left + up) * PA[t - 1][row - 1][0] + left * PA[t - 1][row - 1][1]
+                PA[t][row][int(num_cols) - 1] = (right + up) * PA[t - 1][row - 1][int(num_cols) - 1] + right * \
+                                                PA[t - 1][row - 1][int(num_cols) - 2]
 
-                # the differences between the velocities can cause the robot
-                # to jump over the agent without disabling it
-                # thus the 1.5 factor which is greater than sqrt(2 range^2)
-                if agent.loc.distance_to(robot.loc) <= 1.4 * robot.r:
-                    self.agents.remove(agent)
-                    self._agents_disabled += 1
-                    print('agent disabled')
-                    break
+                for col in range(1, int(num_cols) - 1):
+                        PA[t][row][col] += left * PA[t - 1][row - 1][col + 1] \
+                                           + up * PA[t - 1][row - 1][col] \
+                                           + right * PA[t - 1][row - 1][col - 1]
 
-        return len(self.agents) == 0
+        return PA
 
-    def stats(self) -> str:
-        return f'steps: {self._step}' \
-               f'   acc damage: {round(self._acc_damage, 2)}' \
-               f'   agents disabled: {self._agents_disabled}' \
-               f'   agents escaped: {self._agents_escaped}'
+    def generate_UA(self, PA=None):
+        if PA is None:
+            PA = self.generate_PA()
+
+        T, num_rows, num_cols = PA.shape
+        UA = np.zeros(PA.shape)
+
+        for t in range(T):
+            for r in range(num_rows):
+                for c in range(num_cols):
+                    # the utility is the prevented damage for this cell multiplied by the expected agents amount
+                    UA[t, r, c] = (self.top_border - r) * PA[t, r, c]
+
+        return UA
+
+    def generate_U(self, UA=None):
+        if UA is None:
+            UA = self.generate_UA()
+
+        T, num_rows, num_cols = UA.shape
+        U = np.zeros((T, int(num_rows / 2), int(num_cols / 2)))
+        T, num_rows, num_cols = U.shape
+
+        for t in range(T):
+            for r in range(num_rows):
+                for c in range(num_cols):
+                    U[t][r][c] = UA[t][2 * r][2 * c] + UA[t][2 * r + 1][2 * c] + UA[t][2 * r][2 * c + 1] + \
+                                 UA[t][2 * r + 1][2 * c + 1]
+
+        return U
