@@ -436,25 +436,29 @@ def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U):
     # create utility cells
     for t in range(T):
         for c in range(n_cols):
-            g.add_node(f'[{t},{c}]_i', movement=Point(c, row), color='red')
+            # the movement point is in robots' resolution
+            g.add_node(f'[{t},{c}]_i', movement=Point(c * f, row * f), color='red')
             g.add_node(f'[{t},{c}]_o', color='red')
             # the weight needs to be an integer
             g.add_edge(f'[{t},{c}]_i', f'[{t},{c}]_o', weight=-int(100*R[t,c]), capacity=1)
 
     # add edges between cells
     for t in range(T-1):
+        # handle first cell in row
         g.add_edge(f'[{t},{0}]_o',f'[{t+1},{0}]_i', weight=0, capacity=len(robots))
         g.add_edge(f'[{t},{0}]_o',f'[{t+1},{1}]_i', weight=0, capacity=len(robots))
 
         g.add_edge(f'[{t},{0}]_i',f'[{t+1},{0}]_i', weight=0, capacity=len(robots))
         g.add_edge(f'[{t},{0}]_i',f'[{t+1},{1}]_i', weight=0, capacity=len(robots))
 
+        # handle last cell in row
         g.add_edge(f'[{t},{n_cols-1}]_o',f'[{t+1},{n_cols-1}]_i', weight=0, capacity=len(robots))
         g.add_edge(f'[{t},{n_cols-1}]_o',f'[{t+1},{n_cols-2}]_i', weight=0, capacity=len(robots))
 
         g.add_edge(f'[{t},{n_cols-1}]_i',f'[{t+1},{n_cols-1}]_i', weight=0, capacity=len(robots))
         g.add_edge(f'[{t},{n_cols-1}]_i',f'[{t+1},{n_cols-2}]_i', weight=0, capacity=len(robots))
 
+        # handle the rest
         for c in range(1,n_cols-1):
             g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c-1}]_i', weight=0, capacity=len(robots))
             g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c}]_i', weight=0, capacity=len(robots))
@@ -481,8 +485,6 @@ def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U):
         g.add_edge(f'[{T-1},{c}]_o','t', weight=0, capacity=len(robots))
         g.add_edge(f'[{T-1},{c}]_i','t', weight=0, capacity=len(robots))
 
-    edge_labels = {k: v/100 for k, v in nx.get_edge_attributes(g,'weight').items() if v != 0}
-
     flow = nx.max_flow_min_cost(g, 's', 't')
 
     # delete all edges without flow
@@ -499,13 +501,14 @@ def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U):
     # calc movement and disabled
     movement = {robot: [] for robot in robots}
     for robot in robots:
-        robot_name = str(robot)
-        next = list(g.successors(robot_name))[0]
-        while next != 't':
-            if next[-1] == 'i':
-                print(nodes_pos[next])
-                movement[robot].append(nodes_pos[next])
+        next = str(robot)
+        while True:
+            print(next)
             next = list(g.successors(next))[0]
+            if next == 't':
+                break
+            if next[-1] == 'i':
+                movement[robot].append(nodes_pos[next])
 
     utility = -sum(nx.get_edge_attributes(g,'weight').values())/100
 

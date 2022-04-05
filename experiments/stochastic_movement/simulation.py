@@ -17,7 +17,7 @@ def run(planner: Planner) -> None:
                                               config['y_buffer'], config['y_buffer'] + config['y_size_init']),
                                  config['agent_speed'], config['advance_distribution']) for _ in range(config['num_agents'])]
 
-    robots = [BasicRobot(sample_point(config['x_buffer'], config['x_size'] + config['x_buffer'], config['y_buffer'], config['y_buffer'] + config['y_size']),
+    robots = [BasicRobot(sample_point(config['x_buffer'], config['x_size'] + config['x_buffer'], config['y_buffer'], config['y_buffer'] + config['y_size_init']),
                          config['robot_speed'], config['disablement_range'], has_mode=True)
               for _ in range(config['num_robots'])]
 

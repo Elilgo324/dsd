@@ -22,6 +22,12 @@ class StochasticStaticLackPlanner(Planner):
 
         completion_time = 0
 
+        print(f'optimal row is {h_opt}')
+        for robot in movement_per_h[h_opt]:
+            print('***')
+            for p in movement_per_h[h_opt][robot]:
+                print(p)
+
         return movement_per_h[h_opt], \
                completion_time, \
                utility_per_h[h_opt], \
