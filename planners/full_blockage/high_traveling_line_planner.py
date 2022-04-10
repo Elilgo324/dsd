@@ -1,4 +1,4 @@
-from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.agents.deterministic_agent import DeterministicAgent
 from planners.full_blockage.top_down_scanner_line_planner import TopDownScannerPlanner
 from planners.full_blockage.traveling_line_planner import TravelingLinePlanner
 from planners.planner import Planner
@@ -13,7 +13,7 @@ class HighTravelingLinePlanner(Planner):
         robots = env.robots
         agents = env.agents
 
-        r = robots[0].r
+        r = robots[0].d
         fv = robots[0].fv
         v = agents[0].v
         b = env.border
@@ -28,8 +28,8 @@ class HighTravelingLinePlanner(Planner):
         scanner_agents = agents[cur_max_agents:]
 
         # trp part
-        trp_agents = [FixedVelocityAgent(Point(x_min_a, trp_agents[0].y), v=v),
-                      FixedVelocityAgent(Point(x_max_a, trp_agents[1].y), v=v)] + trp_agents[2:]
+        trp_agents = [DeterministicAgent(Point(x_min_a, trp_agents[0].y), v=v),
+                      DeterministicAgent(Point(x_max_a, trp_agents[1].y), v=v)] + trp_agents[2:]
         trp_env = Environment(robots=robots, agents=trp_agents, border=b)
         movement, completion_time, damage, num_disabled = TravelingLinePlanner().plan(trp_env)
 

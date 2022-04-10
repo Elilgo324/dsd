@@ -6,7 +6,7 @@ from utils.point import Point
 
 
 class BaseAgent(ABC):
-    def __init__(self, loc: Point, v: float):
+    def __init__(self, loc: Point, v: float = 1):
         self._loc = loc
         self._v = v
         self._is_disabled = False

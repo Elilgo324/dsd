@@ -2,7 +2,7 @@ import json
 import time
 from random import seed
 
-from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.agents.deterministic_agent import DeterministicAgent
 from planners.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
 from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
@@ -17,7 +17,7 @@ with open('./config.json') as json_file:
 
 
 def run(planner: Planner):
-    agents = [FixedVelocityAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
+    agents = [DeterministicAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
                                               config['y_buffer'], config['y_buffer'] + config['y_size_init']),
                                  config['agent_speed']) for _ in range(config['num_agents'])]
 

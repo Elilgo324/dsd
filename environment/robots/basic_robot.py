@@ -5,13 +5,12 @@ from utils.point import Point
 
 
 class BasicRobot:
-    def __init__(self, loc: Point, fv: float, r: float, has_mode: bool = True):
+    def __init__(self, loc: Point, fv: float = 2, d: float = 2, is_disabling: bool = False):
         self._loc = loc
         self._fv = fv
-        self._r = r
+        self._d = d
         self._movement = []
-        self._has_mode = has_mode
-        self._is_disabling = False
+        self._is_disabling = is_disabling
 
     @property
     def loc(self) -> Point:
@@ -38,30 +37,30 @@ class BasicRobot:
         return self._fv
 
     @property
-    def r(self) -> float:
-        return self._r
+    def d(self) -> float:
+        return self._d
 
     @property
     def is_disabling(self) -> bool:
-        if not self._has_mode:
-            return True
         return self._is_disabling
 
     def set_movement(self, movement: List[Point]) -> None:
         self._movement = movement
 
     def advance(self) -> None:
-        if self._movement:
-            target = self._movement[0]
-            direction = self.loc.direction_with(target)
+        if len(self._movement) == 0:
+            return
 
-            if self._loc.distance_to(target) > self.fv:
-                self._loc = self.loc.shifted(distance=self.fv, bearing=direction)
-                self._is_disabling = False
-            else:
-                self._loc = self._movement[0]
-                self._movement.pop(0)
-                self._is_disabling = True
+        target = self._movement[0]
+        direction = self.loc.direction_with(target)
+
+        if self._loc.distance_to(target) > self.fv:
+            self._loc = self.loc.shifted(distance=self.fv, bearing=direction)
+            self._is_disabling = False
+
+        else:
+            self._loc = self._movement.pop(0)
+            self._is_disabling = True
 
     def clone(self) -> 'BasicRobot':
         return deepcopy(self)

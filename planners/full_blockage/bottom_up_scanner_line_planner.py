@@ -14,7 +14,7 @@ class BottomUpScannerPlanner(Planner):
         b = env.border
         v = agents[0].v
         fv = robots[0].fv
-        r = robots[0].r
+        r = robots[0].d
 
         x_min_a = min(a.x for a in agents)
         x_max_a = max(a.x for a in agents)

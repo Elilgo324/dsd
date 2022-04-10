@@ -1,6 +1,6 @@
 import math
 
-from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.agents.deterministic_agent import DeterministicAgent
 from environment.agents.stochastic_agent import StochasticAgent
 from environment.robots.basic_robot import BasicRobot
 from environment.stochastic_environment import StochasticEnvironment
@@ -35,13 +35,13 @@ def test_distance():
 
 def test_meeting_height():
     robot = BasicRobot(loc=Point(2, 1), fv=2, r=1, has_mode=True)
-    agent1 = FixedVelocityAgent(Point(0, 0), 1)
+    agent1 = DeterministicAgent(Point(0, 0), 1)
     assert meeting_height(robot, agent1) == 1
 
-    agent2 = FixedVelocityAgent(loc=Point(2, 2), v=1)
+    agent2 = DeterministicAgent(loc=Point(2, 2), v=1)
     assert meeting_height(robot, agent2) == 3
 
-    agent3 = FixedVelocityAgent(Point(4, 0), 1)
+    agent3 = DeterministicAgent(Point(4, 0), 1)
     assert meeting_height(robot, agent1) == meeting_height(robot, agent3)
 
 
@@ -63,10 +63,10 @@ def test_map_into_2_pows():
 
 
 def test_line_trpv():
-    agents = [FixedVelocityAgent(loc=Point(-1, 4), v=0),
-              FixedVelocityAgent(loc=Point(-2, 3), v=0),
-              FixedVelocityAgent(loc=Point(-4, -1), v=0),
-              FixedVelocityAgent(loc=Point(-5, -2), v=0)]
+    agents = [DeterministicAgent(loc=Point(-1, 4), v=0),
+              DeterministicAgent(loc=Point(-2, 3), v=0),
+              DeterministicAgent(loc=Point(-4, -1), v=0),
+              DeterministicAgent(loc=Point(-5, -2), v=0)]
 
     h = 0
     fv = 1
@@ -78,10 +78,10 @@ def test_line_trpv():
     assert damage == 1 * 4 + 1 * 3 + 5 * 2 + 1 * 1
     assert t == 2 + 2 + 4
 
-    agents = [FixedVelocityAgent(loc=Point(-1, 100), v=0),
-              FixedVelocityAgent(loc=Point(-2, 2), v=0),
-              FixedVelocityAgent(loc=Point(-4, -1), v=0),
-              FixedVelocityAgent(loc=Point(-5, -100), v=0)]
+    agents = [DeterministicAgent(loc=Point(-1, 100), v=0),
+              DeterministicAgent(loc=Point(-2, 2), v=0),
+              DeterministicAgent(loc=Point(-4, -1), v=0),
+              DeterministicAgent(loc=Point(-5, -100), v=0)]
 
     h = 0
     fv = 1
@@ -93,13 +93,13 @@ def test_line_trpv():
     assert damage == 1 * 4 + 3 * 3 + 98 * 2 + 200 * 1
     assert t == 1 + 3 + 98 + 200
 
-    agents = [FixedVelocityAgent(loc=Point(-1, -2), v=0),
-              FixedVelocityAgent(loc=Point(-2, -2.1), v=0),
-              FixedVelocityAgent(loc=Point(-3, -2.2), v=0),
-              FixedVelocityAgent(loc=Point(-4, -2.3), v=0),
-              FixedVelocityAgent(loc=Point(-5, 2), v=0),
-              FixedVelocityAgent(loc=Point(8, -1000), v=0),
-              FixedVelocityAgent(loc=Point(9, 100000), v=0)]
+    agents = [DeterministicAgent(loc=Point(-1, -2), v=0),
+              DeterministicAgent(loc=Point(-2, -2.1), v=0),
+              DeterministicAgent(loc=Point(-3, -2.2), v=0),
+              DeterministicAgent(loc=Point(-4, -2.3), v=0),
+              DeterministicAgent(loc=Point(-5, 2), v=0),
+              DeterministicAgent(loc=Point(8, -1000), v=0),
+              DeterministicAgent(loc=Point(9, 100000), v=0)]
 
     h = 0.1
     fv = 1
@@ -111,10 +111,10 @@ def test_line_trpv():
     assert damage == 2.1 * 7 + 0.1 * 6 + 0.1 * 5 + 0.1 * 4 + 3 * 4.3 + 1002 * 2 + 101000 * 1
     assert t == 2.4 + 4.3 + 1002 + 101000
 
-    agents = [FixedVelocityAgent(loc=Point(-2, -5), v=1),
-              FixedVelocityAgent(loc=Point(3, 4), v=1),
-              FixedVelocityAgent(loc=Point(-10, 5), v=1),
-              FixedVelocityAgent(loc=Point(-10, 6), v=1)]
+    agents = [DeterministicAgent(loc=Point(-2, -5), v=1),
+              DeterministicAgent(loc=Point(3, 4), v=1),
+              DeterministicAgent(loc=Point(-10, 5), v=1),
+              DeterministicAgent(loc=Point(-10, 6), v=1)]
 
     h = -1
     fv = 2
@@ -123,10 +123,10 @@ def test_line_trpv():
     movement = line_trpv(h, fv, agents, makespan)['ys']
     assert len(movement) == len(agents)
 
-    agents = [FixedVelocityAgent(loc=Point(-2, 1), v=1),
-              FixedVelocityAgent(loc=Point(3, 2), v=1),
-              FixedVelocityAgent(loc=Point(-10, 3), v=1),
-              FixedVelocityAgent(loc=Point(-10, 4), v=1)]
+    agents = [DeterministicAgent(loc=Point(-2, 1), v=1),
+              DeterministicAgent(loc=Point(3, 2), v=1),
+              DeterministicAgent(loc=Point(-10, 3), v=1),
+              DeterministicAgent(loc=Point(-10, 4), v=1)]
 
     h = 0
     fv = 2
@@ -140,10 +140,10 @@ def test_line_trpv():
 
 
 def test_flow_moves():
-    agents = [FixedVelocityAgent(loc=Point(-1, 9.6), v=1),
-              FixedVelocityAgent(loc=Point(-6, 2), v=1),
-              FixedVelocityAgent(loc=Point(10, 2), v=1),
-              FixedVelocityAgent(loc=Point(8, -1), v=1)]
+    agents = [DeterministicAgent(loc=Point(-1, 9.6), v=1),
+              DeterministicAgent(loc=Point(-6, 2), v=1),
+              DeterministicAgent(loc=Point(10, 2), v=1),
+              DeterministicAgent(loc=Point(8, -1), v=1)]
 
     robots = [BasicRobot(Point(-1, 9), 2, 1), BasicRobot(Point(3, 8), 2, 1)]
 

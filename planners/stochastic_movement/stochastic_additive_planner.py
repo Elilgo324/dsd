@@ -1,20 +1,17 @@
 from environment.agents.stochastic_agent import StochasticAgent
 from environment.stochastic_environment import StochasticEnvironment
-from planners.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.planner import Planner
+from planners.stochastic_movement.stochastic_static_lack_planner import StochasticStaticLackPlanner
 from utils.functions import *
 
 
-class AdditiveStaticLackPlanner(Planner):
+class StochasticAdditivePlanner(Planner):
     def __init__(self):
-        self.wave_size = 100
+        self.wave_size = 10
 
     def plan(self, env: StochasticEnvironment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents = [a.clone() for a in env.agents]
-        b = env.border
-        bl = env.left_border
-        br = env.right_border
         v = agents[0].v
         fv = robots[0].fv
         r = robots[0].d
@@ -26,20 +23,20 @@ class AdditiveStaticLackPlanner(Planner):
         num_disabled = 0
 
         # divide into waves
-        agents = sorted(agents, key= lambda a : a.y, reverse=True)
-        wave_size = int(len(agents) / self.wave_size)
-        waves = [agents[i:i + wave_size] for i in range(0, len(agents), wave_size)]
+        agents = sorted(agents, key=lambda a: a.y, reverse=True)
+        waves = [agents[i:i + self.wave_size] for i in range(0, len(agents), self.wave_size)]
 
         # handle waves additively
         new_robots = robots
         cur_movement = {robot: [robot.loc] for robot in robots}
-        for i_wave in range(len(waves)):
-            wave = waves[i_wave]
-            planner = StaticLineLackPlanner()
+        for i_wave, wave in enumerate(waves):
+            planner = StochasticStaticLackPlanner()
             new_robots = [BasicRobot(cur_movement[robot][-1], fv, r) for robot in new_robots]
-            new_agents = [StochasticAgent(Point(agent.x, agent.y + v * completion_time), v, advance_distribution) for agent in wave]
-            new_env = StochasticEnvironment(robots=new_robots, agents=new_agents, top_border=b, right_border=br, left_border=bl)
-            cur_movement, cur_completion_time, cur_acc_damage, cur_num_disabled = planner.plan(new_env)
+            new_agents = [StochasticAgent(Point(agent.x, agent.y + v * completion_time), v, advance_distribution)
+                          for agent in wave]
+            new_env = StochasticEnvironment(robots=new_robots, agents=new_agents, left_border=env.left_border,
+                                            right_border=env.right_border, top_border=env.top_border)
+            cur_movement, cur_completion_time, cur_damage, _ = planner.plan(new_env)
 
             for i_robot in range(len(robots)):
                 if len(cur_movement[new_robots[i_robot]]) == 0:
@@ -47,10 +44,9 @@ class AdditiveStaticLackPlanner(Planner):
                 movement[robots[i_robot]] += cur_movement[new_robots[i_robot]]
 
             completion_time += cur_completion_time
-            acc_damage += cur_acc_damage + wave_size * (len(waves) - i_wave - 1) * cur_completion_time
-            num_disabled += cur_num_disabled
+            acc_damage += cur_damage + self.wave_size * (len(waves) - i_wave - 1) * cur_completion_time
 
-        return movement, completion_time, acc_damage, num_disabled
+        return movement, 0, 0, 0
 
     def __str__(self):
-        return f'Additive{self.wave_size}StaticLackPlanner'
+        return 'StochasticAdditivePlanner'

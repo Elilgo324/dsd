@@ -1,15 +1,15 @@
 {
-  "x_size": 10,
-  "y_size_init": 20,
-  "y_size": 100,
+  "x_size": 50,
+  "y_size_init": 10,
+  "y_size": 50,
   "x_buffer": 0,
   "y_buffer": 0,
-  "num_robots": 3,
-  "num_agents": 20,
+  "num_robots": 1,
+  "num_agents": 30,
   "agent_speed": 1,
   "robot_speed": 2,
   "disablement_range": 2,
-  "advance_distribution": [0.1, 0.7, 0.2]
+  "advance_distribution": [0.1, 0.8, 0.1]
 }
 
 

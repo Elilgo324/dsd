@@ -1,7 +1,7 @@
 import json
 from math import ceil
 
-from environment.agents.fixed_velocity_agent import FixedVelocityAgent
+from environment.agents.deterministic_agent import DeterministicAgent
 from planners.full_blockage.bottom_up_scanner_line_planner import BottomUpScannerPlanner
 from planners.full_blockage.high_traveling_line_planner import HighTravelingLinePlanner
 from planners.full_blockage.separate_static_planner import SeparateStaticPlanner
@@ -14,7 +14,7 @@ with open('./config.json') as json_file:
 
 
 def run(planner: Planner):
-    agents = [FixedVelocityAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
+    agents = [DeterministicAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
                                               config['y_buffer'], config['y_buffer'] + config['y_size_init']),
                                  config['agent_speed']) for _ in range(config['num_agents'])]
 

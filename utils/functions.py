@@ -45,7 +45,7 @@ def meeting_height(robot: BasicRobot, agent: BaseAgent) -> float:
 
 
 def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent],
-                     env: Environment, config: Dict[str,float]) -> None:
+                     env: Environment, config: Dict[str, float]) -> None:
     plt.clf()
     plt.xlim(0, config['x_size'] + 2 * config['x_buffer'])
     plt.ylim(0, config['y_size'] + 2 * config['y_buffer'])
@@ -54,8 +54,8 @@ def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent],
              [config['y_buffer'], config['y_buffer'] + config['y_size'], config['y_buffer'] + config['y_size'],
               config['y_buffer'], config['y_buffer']], c='black')
     plt.scatter([r.x for r in robots], [r.y for r in robots], c='blue')
-    for i in range(len(robots)):
-        plt.annotate(i, (robots[i].x, robots[i].y))
+    # for i in range(len(robots)):
+    #     plt.annotate(i, (robots[i].x, robots[i].y))
     plt.scatter([a.x for a in agents], [a.y for a in agents], c='red')
     plt.title(env.stats(), fontsize=10)
     # plt.gca().set_aspect('equal', adjustable='box')
@@ -347,183 +347,13 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             'damage': expected_damage,
             'num_disabled': expected_num_disabled}
 
-
-def static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
-    v = agents[0].v
-    fv = robots[0].fv
-
-    def can_stop_on_line(r: Tuple[float, float], a: Tuple[float, float], h: float):
-        x_a, y_a = a
-        x_r, y_r = r
-        t_a = (h - y_a) / v
-        t_r = math.sqrt((x_a - x_r) ** 2 + (h - y_r) ** 2) / fv
-        return t_r <= t_a
-
-    g = nx.DiGraph()
-
-    # create robots
-    for robot in robots:
-        g.add_node(str(robot), pos=robot.xy, color='blue')
-
-    # create agents divided to in and out
-    for agent in agents:
-        g.add_node(str(agent) + '_i', pos=(agent.x - 0.5, agent.y), color='red')
-        g.add_node(str(agent) + '_o', pos=(agent.x + 0.5, agent.y), color='red')
-        g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=-1, capacity=1)
-
-    # add edges from robots to agents
-    for robot in robots:
-        for agent in agents:
-            if can_stop_on_line(r=robot.xy, a=agent.xy, h=h):
-                g.add_edge(str(robot), str(agent) + '_i', weight=0, capacity=1)
-
-    # add edges between agents
-    for agent1 in agents:
-        for agent2 in agents:
-            if agent1 is agent2:
-                continue
-            if can_stop_on_line(r=(agent1.x, h), a=(agent2.x, h - (agent1.y - agent2.y)), h=h):
-                g.add_edge(str(agent1) + '_o', str(agent2) + '_i', weight=0, capacity=1)
-
-    # add dummy source and target to use flow
-    for robot in robots:
-        g.add_edge('s', str(robot), weight=0, capacity=1)
-        g.add_edge(str(robot), 't', weight=0, capacity=1)
-
-    for agent in agents:
-        g.add_edge(str(agent) + '_o', 't', weight=0, capacity=1)
-
-    flow = nx.max_flow_min_cost(g, 's', 't')
-
-    # delete all edges without flow
-    edges_to_delete = []
-    for key1, val1 in flow.items():
-        for key2, val2 in val1.items():
-            if val2 == 0:
-                edges_to_delete.append((key1, key2))
-    for key1, key2 in edges_to_delete:
-        g.remove_edge(key1, key2)
-
-    # calc movement and disabled
-    movement = {robot: [] for robot in robots}
-    agents_names_to_agents = {str(agent) + '_o': agent for agent in agents}
-    disabled = []
-    for robot in robots:
-        robot_name = str(robot)
-        next = list(g.successors(robot_name))[0]
-        while next != 't':
-            if next[-1] == 'i':
-                next = list(g.successors(next))[0]
-            agent = agents_names_to_agents[next]
-            disabled.append(agent)
-            movement[robot].append(Point(agent.x, h))
-            next = list(g.successors(next))[0]
-
-    return {'movement': movement,
-            'disabled': disabled}
-
-def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U):
-    R = U[:,row,:]
-    T, n_cols = R.shape
-    f = robots[0].fv
-
-    g = nx.DiGraph()
-
-    # create robots
-    for robot in robots:
-        g.add_node(str(robot), color='blue')
-
-    # create utility cells
-    for t in range(T):
-        for c in range(n_cols):
-            # the movement point is in robots' resolution
-            g.add_node(f'[{t},{c}]_i', movement=Point(c * f, row * f), color='red')
-            g.add_node(f'[{t},{c}]_o', color='red')
-            # the weight needs to be an integer
-            g.add_edge(f'[{t},{c}]_i', f'[{t},{c}]_o', weight=-int(100*R[t,c]), capacity=1)
-
-    # add edges between cells
-    for t in range(T-1):
-        # handle first cell in row
-        g.add_edge(f'[{t},{0}]_o',f'[{t+1},{0}]_i', weight=0, capacity=len(robots))
-        g.add_edge(f'[{t},{0}]_o',f'[{t+1},{1}]_i', weight=0, capacity=len(robots))
-
-        g.add_edge(f'[{t},{0}]_i',f'[{t+1},{0}]_i', weight=0, capacity=len(robots))
-        g.add_edge(f'[{t},{0}]_i',f'[{t+1},{1}]_i', weight=0, capacity=len(robots))
-
-        # handle last cell in row
-        g.add_edge(f'[{t},{n_cols-1}]_o',f'[{t+1},{n_cols-1}]_i', weight=0, capacity=len(robots))
-        g.add_edge(f'[{t},{n_cols-1}]_o',f'[{t+1},{n_cols-2}]_i', weight=0, capacity=len(robots))
-
-        g.add_edge(f'[{t},{n_cols-1}]_i',f'[{t+1},{n_cols-1}]_i', weight=0, capacity=len(robots))
-        g.add_edge(f'[{t},{n_cols-1}]_i',f'[{t+1},{n_cols-2}]_i', weight=0, capacity=len(robots))
-
-        # handle the rest
-        for c in range(1,n_cols-1):
-            g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c-1}]_i', weight=0, capacity=len(robots))
-            g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c}]_i', weight=0, capacity=len(robots))
-            g.add_edge(f'[{t},{c}]_o',f'[{t+1},{c+1}]_i', weight=0, capacity=len(robots))
-
-            g.add_edge(f'[{t},{c}]_i',f'[{t+1},{c-1}]_i', weight=0, capacity=len(robots))
-            g.add_edge(f'[{t},{c}]_i',f'[{t+1},{c}]_i', weight=0, capacity=len(robots))
-            g.add_edge(f'[{t},{c}]_i',f'[{t+1},{c+1}]_i', weight=0, capacity=len(robots))
-
-    # for each column and robot, add edge corresponding to the arrival time
-    for robot in robots:
-        for c in range(n_cols):
-            arrival_time = int(Point(c * f, row * f).distance_to(robot.loc) / robot.fv)
-            g.add_edge(str(robot),f'[{arrival_time},{c}]_i', weight=0, capacity=1)
-
-    # add dummy source and target to use flow
-    g.add_node('s', color='orange')
-    g.add_node('t', color='orange')
-
-    for robot in robots:
-        g.add_edge('s', str(robot), weight=0, capacity=1)
-
-    for c in range(n_cols):
-        g.add_edge(f'[{T-1},{c}]_o','t', weight=0, capacity=len(robots))
-        g.add_edge(f'[{T-1},{c}]_i','t', weight=0, capacity=len(robots))
-
-    flow = nx.max_flow_min_cost(g, 's', 't')
-
-    # delete all edges without flow
-    edges_to_delete = []
-    for key1, val1 in flow.items():
-        for key2, val2 in val1.items():
-            if val2 == 0:
-                edges_to_delete.append((key1, key2))
-    for key1, key2 in edges_to_delete:
-        g.remove_edge(key1, key2)
-
-    nodes_pos = nx.get_node_attributes(g, 'movement')
-
-    # calc movement and disabled
-    movement = {robot: [] for robot in robots}
-    for robot in robots:
-        next = str(robot)
-        while True:
-            print(next)
-            next = list(g.successors(next))[0]
-            if next == 't':
-                break
-            if next[-1] == 'i':
-                movement[robot].append(nodes_pos[next])
-
-    utility = -sum(nx.get_edge_attributes(g,'weight').values())/100
-
-    return {'movement': movement, 'utility': utility}
-
-def monotonic_lack_moves():
-    pass
-
 def show_grid(M):
     min_val = np.min(M)
     max_val = np.max(M)
     sum_val = np.sum(M)
 
     M = np.flipud(M)
-    fig, ax = plt.subplots(figsize=(20,6))
+    fig, ax = plt.subplots(figsize=(20, 6))
     sb.heatmap(M, annot=True, fmt=".2f", cmap='Blues', vmin=np.min(M), vmax=np.max(M), cbar_kws={"shrink": .8})
     plt.gca().set_aspect('equal', adjustable='box')
     plt.show()

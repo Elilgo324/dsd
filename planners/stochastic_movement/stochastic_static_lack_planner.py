@@ -1,6 +1,8 @@
+from typing import Dict
+
 from environment.stochastic_environment import StochasticEnvironment
 from planners.planner import Planner
-from utils.functions import *
+from utils.flow_utils import *
 
 
 class StochasticStaticLackPlanner(Planner):
@@ -13,25 +15,22 @@ class StochasticStaticLackPlanner(Planner):
 
         T,num_rows,num_cols = U.shape
 
-        flow_per_h = {h: stochastic_lack_moves(robots, h, U) for h in range(num_rows)}
+        flow_per_h = {h: stochastic_lack_moves(robots, h, U, PA) for h in range(num_rows)}
         utility_per_h = {h: flow_per_h[h]['utility'] for h in range(num_rows)}
         movement_per_h = {h: flow_per_h[h]['movement'] for h in range(num_rows)}
+        timing_per_h = {h: flow_per_h[h]['timing'] for h in range(num_rows)}
+        active_time_per_h = {h: flow_per_h[h]['active_time'] for h in range(num_rows)}
+        expected_disabled_per_h = {h: flow_per_h[h]['expected_disabled'] for h in range(num_rows)}
 
-        h_opt = min(list(range(
-            num_rows)), key=lambda h: utility_per_h[h])
+        maximal_damage = sum([env.top_border - agent.y for agent in env.agents])
 
-        completion_time = 0
-
-        print(f'optimal row is {h_opt}')
-        for robot in movement_per_h[h_opt]:
-            print('***')
-            for p in movement_per_h[h_opt][robot]:
-                print(p)
+        h_opt = max(list(range(num_rows)), key=lambda h: utility_per_h[h])
 
         return movement_per_h[h_opt], \
-               completion_time, \
-               utility_per_h[h_opt], \
-               0
+               active_time_per_h[h_opt], \
+               maximal_damage - utility_per_h[h_opt], \
+               expected_disabled_per_h[h_opt],\
+               timing_per_h[h_opt]
 
     def __str__(self):
         return 'StochasticStaticLackPlanner'

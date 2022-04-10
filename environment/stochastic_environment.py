@@ -28,14 +28,20 @@ class StochasticEnvironment(Environment):
     def right_border(self) -> int:
         return self._right_border
 
-    def generate_PA(self):
-        left, up, right = self.agents[0].advance_distribution
+    def generate_Pa(self, agent: StochasticAgent):
+        return self.generate_PA([agent])
+
+    def generate_PA(self, agents: List[StochasticAgent] = None):
+        if agents is None:
+            agents = self.agents
+
+        left, up, right = agents[0].advance_distribution
 
         # init 3d matrix of grid rows, cols and time
         PA = np.zeros((self.top_border, self.top_border, self.right_border))
 
         # in t=0 we have prob. 1 of being in the initial loc
-        for agent in self.agents:
+        for agent in agents:
             PA[0][int(agent.y)][int(agent.x)] = 1
 
         # filling the rest times by dp
@@ -47,14 +53,15 @@ class StochasticEnvironment(Environment):
             # fill the rows by dp
             for row in range(1, num_rows):
                 # handle extreme cells
-                PA[t][row][0] = (left + up) * PA[t - 1][row - 1][0] + left * PA[t - 1][row - 1][1]
-                PA[t][row][int(num_cols) - 1] = (right + up) * PA[t - 1][row - 1][int(num_cols) - 1] + right * \
-                                                PA[t - 1][row - 1][int(num_cols) - 2]
+                PA[t][row][0] = (left + up) * PA[t - 1][row - 1][0] \
+                                + left * PA[t - 1][row - 1][1]
+                PA[t][row][int(num_cols) - 1] = (right + up) * PA[t - 1][row - 1][int(num_cols) - 1] \
+                                                + right * PA[t - 1][row - 1][int(num_cols) - 2]
 
                 for col in range(1, int(num_cols) - 1):
-                        PA[t][row][col] += left * PA[t - 1][row - 1][col + 1] \
-                                           + up * PA[t - 1][row - 1][col] \
-                                           + right * PA[t - 1][row - 1][col - 1]
+                    PA[t][row][col] += left * PA[t - 1][row - 1][col + 1] \
+                                       + up * PA[t - 1][row - 1][col] \
+                                       + right * PA[t - 1][row - 1][col - 1]
 
         return PA
 
@@ -84,7 +91,7 @@ class StochasticEnvironment(Environment):
         for t in range(T):
             for r in range(num_rows):
                 for c in range(num_cols):
-                    U[t][r][c] = UA[t][2 * r][2 * c] + UA[t][2 * r + 1][2 * c] + UA[t][2 * r][2 * c + 1] + \
-                                 UA[t][2 * r + 1][2 * c + 1]
+                    U[t][r][c] = UA[t][2 * r][2 * c] + UA[t][2 * r + 1][2 * c] \
+                                 + UA[t][2 * r][2 * c + 1] + UA[t][2 * r + 1][2 * c + 1]
 
         return U
