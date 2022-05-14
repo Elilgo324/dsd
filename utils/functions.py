@@ -3,7 +3,7 @@ import operator
 import os
 from datetime import datetime
 from math import sqrt, floor
-from random import uniform
+from random import uniform, randint
 from typing import List, Tuple, Dict, Union
 
 import seaborn as sb
@@ -20,7 +20,9 @@ from utils.consts import Consts
 from utils.point import Point
 
 
-def sample_point(x_min: float, x_max: float, y_min: float, y_max: float) -> Point:
+def sample_point(x_min: float, x_max: float, y_min: float, y_max: float, is_int: bool=False) -> Point:
+    if is_int:
+        return Point(randint(int(x_min), int(x_max)-1), randint(int(y_min), int(y_max)))
     return Point(uniform(x_min, x_max), uniform(y_min, y_max))
 
 
@@ -80,16 +82,16 @@ def write_report(planner: str,
                  num_robots: int,
                  f: float,
                  d: float,
-                 completion_time: float,
+                 active_time: float,
                  planner_time: float,
                  damage: float,
                  num_disabled: int,
                  file_name: str = 'results.csv') -> None:
-    stats = [planner, num_agents, num_robots, f, d, completion_time, planner_time, damage, num_disabled]
+    stats = [planner, num_agents, num_robots, f, d, active_time, planner_time, damage, num_disabled]
 
     if not os.path.exists(file_name):
         file = open(file_name, 'a+')
-        file.write('planner,num_agents,num_robots,f,d,completion_time,planner_time,damage,'
+        file.write('planner,num_agents,num_robots,f,d,active_time,planner_time,damage,'
                    'num_disabled\n')
     else:
         file = open(file_name, 'a+')
@@ -99,10 +101,7 @@ def write_report(planner: str,
 
 
 def refine_movement(movement):
-    for i in range(len(movement)):
-        if 0 < i < len(movement) - 1 and step.y[i - 1] < step.y[i] < step.y[j + 1]:
-            continue
-    return movement
+    pass
 
 
 def map_into_2_pows(costs: List[List[float]]) -> List[List[float]]:
@@ -347,13 +346,17 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             'damage': expected_damage,
             'num_disabled': expected_num_disabled}
 
-def show_grid(M):
+def show_grid(M, title_str = None):
     min_val = np.min(M)
     max_val = np.max(M)
     sum_val = np.sum(M)
 
     M = np.flipud(M)
     fig, ax = plt.subplots(figsize=(20, 6))
+
+    if title_str is not None:
+        plt.title(title_str)
+
     sb.heatmap(M, annot=True, fmt=".2f", cmap='Blues', vmin=np.min(M), vmax=np.max(M), cbar_kws={"shrink": .8})
     plt.gca().set_aspect('equal', adjustable='box')
     plt.show()

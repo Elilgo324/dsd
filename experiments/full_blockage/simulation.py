@@ -2,6 +2,7 @@ import json
 from math import ceil
 
 from environment.agents.deterministic_agent import DeterministicAgent
+from planners.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.full_blockage.bottom_up_scanner_line_planner import BottomUpScannerPlanner
 from planners.full_blockage.high_traveling_line_planner import HighTravelingLinePlanner
 from planners.full_blockage.separate_static_planner import SeparateStaticPlanner
@@ -14,6 +15,7 @@ with open('./config.json') as json_file:
 
 
 def run(planner: Planner):
+    config['num_agents'] = 20
     agents = [DeterministicAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
                                               config['y_buffer'], config['y_buffer'] + config['y_size_init']),
                                  config['agent_speed']) for _ in range(config['num_agents'])]
@@ -22,8 +24,9 @@ def run(planner: Planner):
     x_max = max([a.x for a in agents])
 
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
+    num_robots_for_full_blockage = 2
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], has_mode=True)
+                         config['robot_speed'], config['disablement_range'])
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
@@ -47,7 +50,7 @@ def run(planner: Planner):
 
 if __name__ == '__main__':
     # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
-    planners = [HighTravelingLinePlanner() for _ in range(1)]
+    planners = [KmeansAssignmentPlanner() for _ in range(1)]
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)

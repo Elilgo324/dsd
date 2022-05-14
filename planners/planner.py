@@ -7,7 +7,7 @@ from utils.point import Point
 
 
 class Planner(ABC):
-    def plan(self, environment: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+    def plan(self, environment: Environment):
         pass
 
 

@@ -1,14 +1,20 @@
 import math
 
+import numpy as np
+
 from environment.agents.deterministic_agent import DeterministicAgent
 from environment.agents.stochastic_agent import StochasticAgent
 from environment.robots.basic_robot import BasicRobot
+from environment.robots.timing_robot import TimingRobot
 from environment.stochastic_environment import StochasticEnvironment
-from utils.functions import meeting_height, line_trpv, map_into_2_pows, static_lack_moves, show_grid
+from planners.stochastic_movement.stochastic_static_lack_planner import StochasticStaticLackPlanner
+from utils.flow_utils import static_lack_moves
+from utils.functions import meeting_height, line_trpv, map_into_2_pows, show_grid
 from utils.point import Point
 
 
 def test_direction():
+    print('testing direction..')
     p1 = Point(1, 4)
     p2 = Point(1, 2)
     p3 = Point(-5, 2)
@@ -19,6 +25,7 @@ def test_direction():
 
 
 def test_shifted():
+    print('testing shifted..')
     p1 = Point(4, 4)
     p2 = Point(4, 2)
     assert p1.shifted(distance=1, bearing=p1.direction_with(p2)) == Point(4, 3)
@@ -26,6 +33,7 @@ def test_shifted():
 
 
 def test_distance():
+    print('testing distance..')
     p1 = Point(5, 5)
     p2 = Point(-5, -5)
     p3 = Point(7, 5)
@@ -34,7 +42,8 @@ def test_distance():
 
 
 def test_meeting_height():
-    robot = BasicRobot(loc=Point(2, 1), fv=2, r=1, has_mode=True)
+    print('testing meeting height..')
+    robot = BasicRobot(loc=Point(2, 1), fv=2, d=1, is_disabling=True)
     agent1 = DeterministicAgent(Point(0, 0), 1)
     assert meeting_height(robot, agent1) == 1
 
@@ -46,6 +55,7 @@ def test_meeting_height():
 
 
 def test_map_into_2_pows():
+    print('testing 2 pows mapping..')
     costs = [[5, 3, 1],
              [2, 4, 6]]
     modified_costs = map_into_2_pows(costs)
@@ -63,6 +73,7 @@ def test_map_into_2_pows():
 
 
 def test_line_trpv():
+    print('testing line trpv..')
     agents = [DeterministicAgent(loc=Point(-1, 4), v=0),
               DeterministicAgent(loc=Point(-2, 3), v=0),
               DeterministicAgent(loc=Point(-4, -1), v=0),
@@ -140,6 +151,7 @@ def test_line_trpv():
 
 
 def test_flow_moves():
+    print('testing flow moves..')
     agents = [DeterministicAgent(loc=Point(-1, 9.6), v=1),
               DeterministicAgent(loc=Point(-6, 2), v=1),
               DeterministicAgent(loc=Point(10, 2), v=1),
@@ -154,7 +166,8 @@ def test_flow_moves():
     assert movement[robots[1]] == [Point(10, 10), Point(8, 10)]
     assert set(disabled) == set(agents[1:])
 
-def test_U_generation():
+
+def test_P_U_generation():
     b, br = 10, 10
     advance_distribution = (0.2, 0.6, 0.2)
 
@@ -169,15 +182,45 @@ def test_U_generation():
 
     environment = StochasticEnvironment(agents=agents, robots=robots, top_border=b, left_border=0, right_border=br)
 
-    U = environment.generate_U()
-    show_grid(U[2])
+    Pa = environment.get_Pa(agents[0])
+    Ua = environment.get_Ua(agents[0])
+    PA = environment.PA
+    UA = environment.UA
+
+    assert (Ua >= Pa).all()
+    assert (UA >= PA).all()
+    assert (PA >= Pa).all()
+    assert (UA >= Ua).all()
+
+    # show_grid(Pa[1], f'Pa of {agents[0]} at time {1}')
+    # show_grid(Ua[1], f'Ua of {agents[0]} at time {1}')
+    # show_grid(PA[1], f'PA matrix at time {1}')
+    # show_grid(UA[1], f'UA matrix at time {1}')
+
+
+def test_stochastic_lack_moves():
+    agents = [StochasticAgent(loc=Point(2, 4), v=1, advance_distribution=[0, 1, 0]),
+              StochasticAgent(loc=Point(5, 3), v=1, advance_distribution=[0, 1, 0]),
+              StochasticAgent(loc=Point(7, 4), v=1, advance_distribution=[0, 1, 0])]
+
+    robots = [TimingRobot(Point(2, 0), fv=2),
+              TimingRobot(Point(5, 0), fv=2),
+              TimingRobot(Point(7, 0), fv=2)]
+
+    env = StochasticEnvironment(agents=agents, robots=robots, top_border=20,
+                                right_border=10, left_border=0)
+
+    planner = StochasticStaticLackPlanner()
+    movement, time, damage, disabled, timing = planner.plan(env)
+
 
 if __name__ == '__main__':
-    # test_direction()
-    # test_shifted()
-    # test_distance()
-    # test_meeting_height()
-    # test_line_trpv()
-    # test_map_into_2_pows()
-    # test_flow_moves()
-    test_U_generation()
+    test_direction()
+    test_shifted()
+    test_distance()
+    test_meeting_height()
+    test_line_trpv()
+    test_map_into_2_pows()
+    test_flow_moves()
+    test_P_U_generation()
+    test_stochastic_lack_moves()

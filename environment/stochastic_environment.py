@@ -15,6 +15,10 @@ class StochasticEnvironment(Environment):
         self._top_border = top_border
         self._left_border = left_border
         self._right_border = right_border
+        self._PA = None
+        self._UA = None
+        self._Pas = {agent: None for agent in self._agents}
+        self._Uas = {agent: None for agent in self._agents}
 
     @property
     def top_border(self) -> int:
@@ -28,10 +32,29 @@ class StochasticEnvironment(Environment):
     def right_border(self) -> int:
         return self._right_border
 
-    def generate_Pa(self, agent: StochasticAgent):
-        return self.generate_PA([agent])
+    @property
+    def PA(self):
+        if self._PA is None:
+            self._PA = self._generate_PA()
+        return self._PA
 
-    def generate_PA(self, agents: List[StochasticAgent] = None):
+    @property
+    def UA(self):
+        if self._UA is None:
+            self._UA = self._generate_UA()
+        return self._UA
+
+    def get_Pa(self, agent: StochasticAgent):
+        if self._Pas[agent] is  None:
+            self._Pas[agent] = self._generate_PA([agent])
+        return self._Pas[agent]
+
+    def get_Ua(self, agent: StochasticAgent):
+        if self._Uas[agent] is None:
+            self._Uas[agent] = self._generate_UA(PA=self.get_Pa(agent))
+        return self._Uas[agent]
+
+    def _generate_PA(self, agents: List[StochasticAgent] = None):
         if agents is None:
             agents = self.agents
 
@@ -65,9 +88,9 @@ class StochasticEnvironment(Environment):
 
         return PA
 
-    def generate_UA(self, PA=None):
+    def _generate_UA(self, PA=None):
         if PA is None:
-            PA = self.generate_PA()
+            PA = self.PA
 
         T, num_rows, num_cols = PA.shape
         UA = np.zeros(PA.shape)
@@ -79,19 +102,3 @@ class StochasticEnvironment(Environment):
                     UA[t, r, c] = (self.top_border - r) * PA[t, r, c]
 
         return UA
-
-    def generate_U(self, UA=None):
-        if UA is None:
-            UA = self.generate_UA()
-
-        T, num_rows, num_cols = UA.shape
-        U = np.zeros((T, int(num_rows / 2), int(num_cols / 2)))
-        T, num_rows, num_cols = U.shape
-
-        for t in range(T):
-            for r in range(num_rows):
-                for c in range(num_cols):
-                    U[t][r][c] = UA[t][2 * r][2 * c] + UA[t][2 * r + 1][2 * c] \
-                                 + UA[t][2 * r][2 * c + 1] + UA[t][2 * r + 1][2 * c + 1]
-
-        return U

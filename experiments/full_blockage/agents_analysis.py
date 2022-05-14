@@ -30,7 +30,7 @@ def run(planner: Planner):
 
     num_robots_for_full_blockage = ceil((x_max - x_min) / (2 * config['disablement_range']))
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], has_mode=True)
+                         config['robot_speed'], config['disablement_range'])
               for _ in range(num_robots_for_full_blockage)]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
@@ -44,7 +44,7 @@ def run(planner: Planner):
                  num_robots=num_robots_for_full_blockage,
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 completion_time=completion_time,
+                 active_time=completion_time,
                  planner_time=planning_time,
                  damage=expected_damage,
                  num_disabled=expected_num_disabled,
@@ -58,14 +58,15 @@ if __name__ == '__main__':
     #             SeparateTravelingPlanner(),
     #             TravelingLineSamplingPlanner(),
     #             TravelingLinePlanner()]
-    planners = [IterativeAssignmentPlanner(), KmeansAssignmentPlanner(), StaticLinePlanner()]
+    planners = [KmeansAssignmentPlanner()]
 
     for planner in planners:
-        for v in [50,100,200,300,400,500,600,700,800,900,1000]:
+        for v in [50]:
             print(f'*** *** v={v} *** ***')
             for s in range(5):
                 seed(s)
 
                 config['num_agents'] = v
+                config['num_robots'] = 2
                 print(f'running {str(planner)} with seed {s}..')
                 run(planner)

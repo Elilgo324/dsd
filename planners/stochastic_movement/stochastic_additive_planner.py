@@ -1,3 +1,5 @@
+from random import choices
+
 from environment.agents.stochastic_agent import StochasticAgent
 from environment.stochastic_environment import StochasticEnvironment
 from planners.planner import Planner
@@ -7,9 +9,9 @@ from utils.functions import *
 
 class StochasticAdditivePlanner(Planner):
     def __init__(self):
-        self.wave_size = 10
+        self.wave_size = 3
 
-    def plan(self, env: StochasticEnvironment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+    def plan(self, env: StochasticEnvironment):
         robots = env.robots
         agents = [a.clone() for a in env.agents]
         v = agents[0].v
@@ -18,7 +20,8 @@ class StochasticAdditivePlanner(Planner):
         advance_distribution = agents[0].advance_distribution
 
         movement = {robot: [] for robot in robots}
-        completion_time = 0
+        timing = {robot: [] for robot in robots}
+        active_time = 0
         acc_damage = 0
         num_disabled = 0
 
@@ -32,21 +35,22 @@ class StochasticAdditivePlanner(Planner):
         for i_wave, wave in enumerate(waves):
             planner = StochasticStaticLackPlanner()
             new_robots = [BasicRobot(cur_movement[robot][-1], fv, r) for robot in new_robots]
-            new_agents = [StochasticAgent(Point(agent.x, agent.y + v * completion_time), v, advance_distribution)
-                          for agent in wave]
+            noise = sum([choices([-1, 0, 1], weights=advance_distribution, k=active_time)[0] for _ in range(active_time)])
+            new_agents = [StochasticAgent(Point(agent.x + noise, agent.y + v * active_time),
+                                          v, advance_distribution) for agent in wave
+                          if agent.y + v * active_time < env.top_border]
             new_env = StochasticEnvironment(robots=new_robots, agents=new_agents, left_border=env.left_border,
                                             right_border=env.right_border, top_border=env.top_border)
-            cur_movement, cur_completion_time, cur_damage, _ = planner.plan(new_env)
+            cur_movement, cur_active_time, cur_damage, _, cur_timing = planner.plan(new_env)
 
-            for i_robot in range(len(robots)):
-                if len(cur_movement[new_robots[i_robot]]) == 0:
-                    cur_movement[new_robots[i_robot]] = [new_robots[i_robot].loc]
-                movement[robots[i_robot]] += cur_movement[new_robots[i_robot]]
+            for i_robot, robot in enumerate(new_robots):
+                movement[robots[i_robot]] += cur_movement[robot]
+                timing[robots[i_robot]] += cur_timing[robot]
 
-            completion_time += cur_completion_time
-            acc_damage += cur_damage + self.wave_size * (len(waves) - i_wave - 1) * cur_completion_time
+            active_time += cur_active_time
+            acc_damage += cur_damage + self.wave_size * (len(waves) - i_wave - 1) * cur_active_time
 
-        return movement, 0, 0, 0
+        return movement, 0, 0, 0, timing
 
     def __str__(self):
         return 'StochasticAdditivePlanner'

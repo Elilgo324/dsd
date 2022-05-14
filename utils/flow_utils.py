@@ -2,6 +2,8 @@ import math
 from typing import List, Tuple
 
 import networkx as nx
+import numpy as np
+from matplotlib import pyplot as plt
 
 from environment.agents.base_agent import BaseAgent
 from environment.robots.basic_robot import BasicRobot
@@ -86,23 +88,23 @@ def static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: 
 def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U, PA):
     R = U[:, row, :]
     T, n_cols = R.shape
-    f = robots[0].fv
+    # f = robots[0].fv
 
     g = nx.DiGraph()
 
     # create robots
     for robot in robots:
-        g.add_node(str(robot), color='blue')
+        g.add_node(str(robot), color='blue', pos=np.array([robot.x, robot.y]))
 
     # create utility cells
     for t in range(T):
         for c in range(n_cols):
-            # the movement point is in robots' resolution
-            g.add_node(f'[{t},{c}]_i', time=t, col=c, color='red')
-            g.add_node(f'[{t},{c}]_o', time=t, col=c, color='red')
+            g.add_node(f'[{t},{c}]_i', time=t, col=c, color='red', pos=np.array([2 * c, 10 + 2 * (5 * t)]))
+            g.add_node(f'[{t},{c}]_o', time=t, col=c, color='red', pos=np.array([2 * c, 10 + 2 * (5 * t + 3)]))
 
             # the weight needs to be an integer
-            g.add_edge(f'[{t},{c}]_i', f'[{t},{c}]_o', weight=-int(10_000 * R[t, c]), capacity=1)
+            if R[t,c] != 0:
+                g.add_edge(f'[{t},{c}]_i', f'[{t},{c}]_o', weight=-int(10_000 * R[t, c]), capacity=1)
 
     # add edges between cells
     for t in range(T - 1):
@@ -113,12 +115,18 @@ def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U, PA):
         g.add_edge(f'[{t},{0}]_o', f'[{t + 1},{1}]_i', weight=0, capacity=len(robots))
         g.add_edge(f'[{t},{0}]_i', f'[{t + 1},{1}]_i', weight=0, capacity=len(robots))
 
+        g.add_edge(f'[{t},{0}]_o', f'[{t + 1},{2}]_i', weight=0, capacity=len(robots))
+        g.add_edge(f'[{t},{0}]_i', f'[{t + 1},{2}]_i', weight=0, capacity=len(robots))
+
         # handle last cell in row, edge in the same column gets a tiny bonus
         g.add_edge(f'[{t},{n_cols - 1}]_o', f'[{t + 1},{n_cols - 1}]_i', weight=-1, capacity=len(robots))
         g.add_edge(f'[{t},{n_cols - 1}]_i', f'[{t + 1},{n_cols - 1}]_i', weight=-1, capacity=len(robots))
 
         g.add_edge(f'[{t},{n_cols - 1}]_o', f'[{t + 1},{n_cols - 2}]_i', weight=0, capacity=len(robots))
         g.add_edge(f'[{t},{n_cols - 1}]_i', f'[{t + 1},{n_cols - 2}]_i', weight=0, capacity=len(robots))
+
+        g.add_edge(f'[{t},{n_cols - 1}]_o', f'[{t + 1},{n_cols - 3}]_i', weight=0, capacity=len(robots))
+        g.add_edge(f'[{t},{n_cols - 1}]_i', f'[{t + 1},{n_cols - 3}]_i', weight=0, capacity=len(robots))
 
         # handle the rest, edge in the same column gets a tiny bonus
         for c in range(1, n_cols - 1):
@@ -134,12 +142,12 @@ def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U, PA):
     # for each column and robot, add edge corresponding to their arrival time
     for robot in robots:
         for c in range(n_cols):
-            arrival_time = int(Point(f * (c + 0.5), f * (row + 0.5)).distance_to(robot.loc) / robot.fv)
+            arrival_time = int(Point(c + 0.5, row + 0.5).distance_to(robot.loc) / robot.fv)
             g.add_edge(str(robot), f'[{arrival_time},{c}]_i', weight=0, capacity=1)
 
     # add dummy source and target to use flow
-    g.add_node('s', color='orange')
-    g.add_node('t', color='orange')
+    g.add_node('s', color='orange', pos=np.array([n_cols, 0]))
+    g.add_node('t', color='orange', pos=np.array([n_cols, 12 * T]))
 
     for robot in robots:
         g.add_edge('s', str(robot), weight=0, capacity=1)
@@ -167,31 +175,38 @@ def stochastic_lack_moves(robots: List['BasicRobot'], row: float, U, PA):
     movement = {robot: [] for robot in robots}
     timing = {robot: [] for robot in robots}
     expected_disabled = 0
+    expected_utility = 0
     for robot in robots:
         next = str(robot)
+
         while True:
             next = list(g.successors(next))[0]
             if next == 't':
                 break
+
             if next[-1] == 'o':
                 cur_time = nodes_times[next]
+                cur_col = nodes_cols[next]
+                expected_disabled += PA[cur_time][row][cur_col]
+                expected_utility += U[cur_time][row][cur_col]
                 active_time = max(active_time, cur_time)
 
-                cur_col = nodes_cols[next]
-                expected_disabled += PA[cur_time][f * row][f * cur_col] \
-                                     + PA[cur_time][f * row + 1][f * cur_col] \
-                                     + PA[cur_time][f * row][f * cur_col + 1] \
-                                     + PA[cur_time][f * row + 1][f * cur_col + 1]
-
-            if next[-1] == 'i':
-                movement[robot].append(Point(f * (nodes_cols[next] + 0.5), f * (row + 0.5)))
+            elif next[-1] == 'i':
+                movement[robot].append(Point(nodes_cols[next] + 0.5, row + 0.5))
                 timing[robot].append(nodes_times[next])
 
-    utility = -sum([round(w / 10_000, 3) for w in nx.get_edge_attributes(g, 'weight').values()])
+    # edge_labels = {k: v / 10_000 for k, v in nx.get_edge_attributes(g, 'weight').items() if v != 0}
+    # pos = nx.get_node_attributes(g, 'pos')
+    # plt.figure(3, figsize=(10, 20))
+    # nx.draw(g, pos=pos,
+    #         node_color=nx.get_node_attributes(g, 'color').values(),
+    #         with_labels=True, node_size = [0.5 for _ in g.nodes])
+    # nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, rotate=False)
+    # plt.show()
 
     return {'movement': movement,
             'timing': timing,
-            'utility': utility,
+            'utility': expected_utility,
             'active_time': active_time,
             'expected_disabled': expected_disabled}
 

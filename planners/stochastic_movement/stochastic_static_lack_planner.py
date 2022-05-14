@@ -6,16 +6,15 @@ from utils.flow_utils import *
 
 
 class StochasticStaticLackPlanner(Planner):
-    def plan(self, env: StochasticEnvironment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+    def plan(self, env: StochasticEnvironment):
         robots = env.robots
 
-        PA = env.generate_PA()
-        UA = env.generate_UA(PA)
-        U = env.generate_U(UA)
+        PA = env._generate_PA()
+        UA = env._generate_UA()
 
-        T,num_rows,num_cols = U.shape
+        T,num_rows,num_cols = UA.shape
 
-        flow_per_h = {h: stochastic_lack_moves(robots, h, U, PA) for h in range(num_rows)}
+        flow_per_h = {h: stochastic_lack_moves(robots, h, UA, PA) for h in range(num_rows)}
         utility_per_h = {h: flow_per_h[h]['utility'] for h in range(num_rows)}
         movement_per_h = {h: flow_per_h[h]['movement'] for h in range(num_rows)}
         timing_per_h = {h: flow_per_h[h]['timing'] for h in range(num_rows)}
