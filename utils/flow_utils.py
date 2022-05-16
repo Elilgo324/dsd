@@ -5,8 +5,8 @@ import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
 
-from environment.agents.base_agent import BaseAgent
-from environment.robots.basic_robot import BasicRobot
+from world.agents.base_agent import BaseAgent
+from world.robots.basic_robot import BasicRobot
 from utils.point import Point
 
 

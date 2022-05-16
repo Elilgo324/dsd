@@ -2,14 +2,15 @@ import math
 
 import numpy as np
 
-from environment.agents.deterministic_agent import DeterministicAgent
-from environment.agents.stochastic_agent import StochasticAgent
-from environment.robots.basic_robot import BasicRobot
-from environment.robots.timing_robot import TimingRobot
-from environment.stochastic_environment import StochasticEnvironment
-from planners.stochastic_movement.stochastic_static_lack_planner import StochasticStaticLackPlanner
+from world.agents.deterministic_agent import DeterministicAgent
+from world.agents.stochastic_agent import StochasticAgent
+from world.robots.basic_robot import BasicRobot
+from world.robots.timing_robot import TimingRobot
+from world.stochastic_environment import StochasticEnvironment
+from planners.stochastic.partial_blockage.stochastic_static_lack_planner import StochasticStaticLackPlanner
+from utils.consts import Consts
 from utils.flow_utils import static_lack_moves
-from utils.functions import meeting_height, line_trpv, map_into_2_pows, show_grid
+from utils.functions import meeting_height, line_trpv, map_into_2_pows
 from utils.point import Point
 
 
@@ -192,13 +193,16 @@ def test_P_U_generation():
     assert (PA >= Pa).all()
     assert (UA >= Ua).all()
 
-    delta = 1
-    a = abs(PA - np.sum([environment.get_Pa(a) for a in agents]))
-    assert (abs(PA - np.sum([environment.get_Pa(a) for a in agents])) < delta).all()
-    assert (abs(UA - np.sum([environment.get_Ua(a) for a in agents])) < delta).all()
+    Pa_sum = environment.get_Pa(agents[0])
+    Ua_sum = environment.get_Ua(agents[0])
+    for agent in agents[1:]:
+        Pa_sum += environment.get_Pa(agent)
+        Ua_sum += environment.get_Ua(agent)
 
+    assert (abs(PA - Pa_sum) < Consts.EPSILON).all()
+    assert (abs(UA - Ua_sum) < Consts.EPSILON).all()
 
-# show_grid(Pa[1], f'Pa of {agents[0]} at time {1}')
+    # show_grid(Pa[1], f'Pa of {agents[0]} at time {1}')
     # show_grid(Ua[1], f'Ua of {agents[0]} at time {1}')
     # show_grid(PA[1], f'PA matrix at time {1}')
     # show_grid(UA[1], f'UA matrix at time {1}')

@@ -13,9 +13,9 @@ import networkx as nx
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from environment.agents.base_agent import BaseAgent
-from environment.environment import Environment
-from environment.robots.basic_robot import BasicRobot
+from world.agents.base_agent import BaseAgent
+from world.environment import Environment
+from world.robots.basic_robot import BasicRobot
 from utils.consts import Consts
 from utils.point import Point
 
@@ -56,8 +56,8 @@ def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent],
              [config['y_buffer'], config['y_buffer'] + config['y_size'], config['y_buffer'] + config['y_size'],
               config['y_buffer'], config['y_buffer']], c='black')
     plt.scatter([r.x for r in robots], [r.y for r in robots], c='blue')
-    # for i in range(len(robots)):
-    #     plt.annotate(i, (robots[i].x, robots[i].y))
+    for i in range(len(robots)):
+        plt.annotate(i, (robots[i].x, robots[i].y))
     plt.scatter([a.x for a in agents], [a.y for a in agents], c='red')
     plt.title(env.stats(), fontsize=10)
     # plt.gca().set_aspect('equal', adjustable='box')
@@ -352,11 +352,7 @@ def show_grid(M, title_str = None):
     sum_val = np.sum(M)
 
     M = np.flipud(M)
-    fig, ax = plt.subplots(figsize=(20, 6))
-
-    if title_str is not None:
-        plt.title(title_str)
-
+    fig, ax = plt.subplots(figsize=(20,6))
     sb.heatmap(M, annot=True, fmt=".2f", cmap='Blues', vmin=np.min(M), vmax=np.max(M), cbar_kws={"shrink": .8})
     plt.gca().set_aspect('equal', adjustable='box')
     plt.show()

@@ -1,8 +1,8 @@
 from abc import ABC
 from typing import Dict, List, Tuple
 
-from environment.robots.basic_robot import BasicRobot
-from environment.environment import Environment
+from world.robots.basic_robot import BasicRobot
+from world.environment import Environment
 from utils.point import Point
 
 
