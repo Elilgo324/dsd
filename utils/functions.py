@@ -3,22 +3,26 @@ import operator
 import os
 from datetime import datetime
 from math import sqrt, floor
-from random import uniform
+from random import uniform, randint
 from typing import List, Tuple, Dict, Union
 
+import seaborn as sb
 import matplotlib.pyplot as plt
 import imageio
 import networkx as nx
+import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from environment.agents.base_agent import BaseAgent
-from environment.environment import Environment
-from environment.robots.basic_robot import BasicRobot
+from world.agents.base_agent import BaseAgent
+from world.environment import Environment
+from world.robots.basic_robot import BasicRobot
 from utils.consts import Consts
 from utils.point import Point
 
 
-def sample_point(x_min: float, x_max: float, y_min: float, y_max: float) -> Point:
+def sample_point(x_min: float, x_max: float, y_min: float, y_max: float, is_int: bool=False) -> Point:
+    if is_int:
+        return Point(randint(int(x_min), int(x_max)-1), randint(int(y_min), int(y_max)))
     return Point(uniform(x_min, x_max), uniform(y_min, y_max))
 
 
@@ -43,7 +47,7 @@ def meeting_height(robot: BasicRobot, agent: BaseAgent) -> float:
 
 
 def plot_environment(robots: List[BasicRobot], agents: List[BaseAgent],
-                     env: Environment, config: Dict[str,float]) -> None:
+                     env: Environment, config: Dict[str, float]) -> None:
     plt.clf()
     plt.xlim(0, config['x_size'] + 2 * config['x_buffer'])
     plt.ylim(0, config['y_size'] + 2 * config['y_buffer'])
@@ -78,16 +82,16 @@ def write_report(planner: str,
                  num_robots: int,
                  f: float,
                  d: float,
-                 completion_time: float,
+                 active_time: float,
                  planner_time: float,
                  damage: float,
                  num_disabled: int,
                  file_name: str = 'results.csv') -> None:
-    stats = [planner, num_agents, num_robots, f, d, completion_time, planner_time, damage, num_disabled]
+    stats = [planner, num_agents, num_robots, f, d, active_time, planner_time, damage, num_disabled]
 
     if not os.path.exists(file_name):
         file = open(file_name, 'a+')
-        file.write('planner,num_agents,num_robots,f,d,completion_time,planner_time,damage,'
+        file.write('planner,num_agents,num_robots,f,d,active_time,planner_time,damage,'
                    'num_disabled\n')
     else:
         file = open(file_name, 'a+')
@@ -97,10 +101,7 @@ def write_report(planner: str,
 
 
 def refine_movement(movement):
-    for i in range(len(movement)):
-        if 0 < i < len(movement) - 1 and step.y[i - 1] < step.y[i] < step.y[j + 1]:
-            continue
-    return movement
+    pass
 
 
 def map_into_2_pows(costs: List[List[float]]) -> List[List[float]]:
@@ -345,77 +346,17 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             'damage': expected_damage,
             'num_disabled': expected_num_disabled}
 
+def show_grid(M, title_str = None):
+    min_val = np.min(M)
+    max_val = np.max(M)
+    sum_val = np.sum(M)
 
-def flow_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
-    v = agents[0].v
-    fv = robots[0].fv
+    M = np.flipud(M)
+    fig, ax = plt.subplots(figsize=(20,6))
+    sb.heatmap(M, annot=True, fmt=".2f", cmap='Blues', vmin=np.min(M), vmax=np.max(M), cbar_kws={"shrink": .8})
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.show()
 
-    def can_stop_on_line(r: Tuple[float, float], a: Tuple[float, float], h: float):
-        x_a, y_a = a
-        x_r, y_r = r
-        t_a = (h - y_a) / v
-        t_r = math.sqrt((x_a - x_r) ** 2 + (h - y_r) ** 2) / fv
-        return t_r <= t_a
-
-    g = nx.DiGraph()
-
-    # create robots
-    for robot in robots:
-        g.add_node(str(robot), pos=robot.xy, color='blue')
-
-    # create agents divided to in and out
-    for agent in agents:
-        g.add_node(str(agent) + '_i', pos=(agent.x - 0.5, agent.y), color='red')
-        g.add_node(str(agent) + '_o', pos=(agent.x + 0.5, agent.y), color='red')
-        g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=-1, capacity=1)
-
-    # add edges from robots to agents
-    for robot in robots:
-        for agent in agents:
-            if can_stop_on_line(r=robot.xy, a=agent.xy, h=h):
-                g.add_edge(str(robot), str(agent) + '_i', weight=0, capacity=1)
-
-    # add edges between agents
-    for agent1 in agents:
-        for agent2 in agents:
-            if agent1 is agent2:
-                continue
-            if can_stop_on_line(r=(agent1.x, h), a=(agent2.x, h - (agent1.y - agent2.y)), h=h):
-                g.add_edge(str(agent1) + '_o', str(agent2) + '_i', weight=0, capacity=1)
-
-    # add dummy source and target to use flow
-    for robot in robots:
-        g.add_edge('s', str(robot), weight=0, capacity=1)
-        g.add_edge(str(robot), 't', weight=0, capacity=1)
-
-    for agent in agents:
-        g.add_edge(str(agent) + '_o', 't', weight=0, capacity=1)
-
-    flow = nx.max_flow_min_cost(g, 's', 't')
-
-    # delete all edges without flow
-    edges_to_delete = []
-    for key1, val1 in flow.items():
-        for key2, val2 in val1.items():
-            if val2 == 0:
-                edges_to_delete.append((key1, key2))
-    for key1, key2 in edges_to_delete:
-        g.remove_edge(key1, key2)
-
-    # calc movement and disabled
-    movement = {robot: [] for robot in robots}
-    agents_names_to_agents = {str(agent) + '_o': agent for agent in agents}
-    disabled = []
-    for robot in robots:
-        robot_name = str(robot)
-        next = list(g.successors(robot_name))[0]
-        while next != 't':
-            if next[-1] == 'i':
-                next = list(g.successors(next))[0]
-            agent = agents_names_to_agents[next]
-            disabled.append(agent)
-            movement[robot].append(Point(agent.x, h))
-            next = list(g.successors(next))[0]
-
-    return {'movement': movement,
-            'disabled': disabled}
+    print(f'sum of mat cells: {sum_val}')
+    print(f'max value is: {max_val}')
+    print(f'min value is: {min_val}')

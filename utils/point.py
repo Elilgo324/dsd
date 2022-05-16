@@ -36,7 +36,7 @@ class Point:
     def distance_to(self, other):
         delta_x = self.x - other.x
         delta_y = self.y - other.y
-        return math.sqrt(delta_x**2 + delta_y**2)
+        return math.sqrt(delta_x ** 2 + delta_y ** 2)
 
     def cartesian_shifted(self, x, y):
         return Point(self.x + x, self.y + y)
@@ -44,12 +44,12 @@ class Point:
     def shifted(self, distance, bearing):
         x = distance * math.cos(bearing)
         y = distance * math.sin(bearing)
-        return self.cartesian_shifted(x,y)
+        return self.cartesian_shifted(x, y)
 
     def direction_with(self, other):
         delta_x = other.x - self.x
         delta_y = other.y - self.y
-        theta = math.atan2(delta_y,delta_x)
+        theta = math.atan2(delta_y, delta_x)
         if theta < 0:
             theta += 2 * math.pi
         return theta

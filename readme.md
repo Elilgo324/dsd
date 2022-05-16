@@ -5,7 +5,34 @@ Showing that the problem is hard even in naive settings, we turn to examine algo
 Motivated by the poor performance when a weak group of robots attempts to catch a large swarm of agents, whether it is a significant numerical minority or poor speed gaps, we suggest the use of _blocking lines_: the robots form lines that block the agents along their movement in the environment.
 We show by both theoretical analysis and rigorous empirical evaluation in different settings that these algorithms outperform common task-assignment-based algorithms, especially for limited robots versus a large swarm.
 
-![StaticLinePlanner](StaticLinePlanner_readme.gif)
+## Deterministic case
+
+### Full-blockage case
+
+#### StaticLine
+
+![StaticLinePlanner](readme_gifs/StaticLinePlanner_readme.gif)
+
+#### TravelingLine
+
+#### SeparateTraveling
+
+### Partial-blockage
+
+#### StaticLineLack
+
+#### SeparateStaticLack
+
+#### SeparateAdditiveLack
+
+### BaseLine
+
+#### IterativeAssignment
+
+#### KmeansAssignment
+
+## Stochastic case
+
 
 
 

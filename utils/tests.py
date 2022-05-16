@@ -1,12 +1,21 @@
 import math
 
-from environment.agents.fixed_velocity_agent import FixedVelocityAgent
-from environment.robots.basic_robot import BasicRobot
-from utils.functions import meeting_height, line_trpv, map_into_2_pows, flow_moves
+import numpy as np
+
+from world.agents.deterministic_agent import DeterministicAgent
+from world.agents.stochastic_agent import StochasticAgent
+from world.robots.basic_robot import BasicRobot
+from world.robots.timing_robot import TimingRobot
+from world.stochastic_environment import StochasticEnvironment
+from planners.stochastic.partial_blockage.stochastic_static_lack_planner import StochasticStaticLackPlanner
+from utils.consts import Consts
+from utils.flow_utils import static_lack_moves
+from utils.functions import meeting_height, line_trpv, map_into_2_pows
 from utils.point import Point
 
 
 def test_direction():
+    print('testing direction..')
     p1 = Point(1, 4)
     p2 = Point(1, 2)
     p3 = Point(-5, 2)
@@ -17,6 +26,7 @@ def test_direction():
 
 
 def test_shifted():
+    print('testing shifted..')
     p1 = Point(4, 4)
     p2 = Point(4, 2)
     assert p1.shifted(distance=1, bearing=p1.direction_with(p2)) == Point(4, 3)
@@ -24,6 +34,7 @@ def test_shifted():
 
 
 def test_distance():
+    print('testing distance..')
     p1 = Point(5, 5)
     p2 = Point(-5, -5)
     p3 = Point(7, 5)
@@ -32,18 +43,20 @@ def test_distance():
 
 
 def test_meeting_height():
-    robot = BasicRobot(loc=Point(2, 1), fv=2, r=1, has_mode=True)
-    agent1 = FixedVelocityAgent(Point(0, 0), 1)
+    print('testing meeting height..')
+    robot = BasicRobot(loc=Point(2, 1), fv=2, d=1, is_disabling=True)
+    agent1 = DeterministicAgent(Point(0, 0), 1)
     assert meeting_height(robot, agent1) == 1
 
-    agent2 = FixedVelocityAgent(loc=Point(2, 2), v=1)
+    agent2 = DeterministicAgent(loc=Point(2, 2), v=1)
     assert meeting_height(robot, agent2) == 3
 
-    agent3 = FixedVelocityAgent(Point(4, 0), 1)
+    agent3 = DeterministicAgent(Point(4, 0), 1)
     assert meeting_height(robot, agent1) == meeting_height(robot, agent3)
 
 
 def test_map_into_2_pows():
+    print('testing 2 pows mapping..')
     costs = [[5, 3, 1],
              [2, 4, 6]]
     modified_costs = map_into_2_pows(costs)
@@ -61,10 +74,11 @@ def test_map_into_2_pows():
 
 
 def test_line_trpv():
-    agents = [FixedVelocityAgent(loc=Point(-1, 4), v=0),
-              FixedVelocityAgent(loc=Point(-2, 3), v=0),
-              FixedVelocityAgent(loc=Point(-4, -1), v=0),
-              FixedVelocityAgent(loc=Point(-5, -2), v=0)]
+    print('testing line trpv..')
+    agents = [DeterministicAgent(loc=Point(-1, 4), v=0),
+              DeterministicAgent(loc=Point(-2, 3), v=0),
+              DeterministicAgent(loc=Point(-4, -1), v=0),
+              DeterministicAgent(loc=Point(-5, -2), v=0)]
 
     h = 0
     fv = 1
@@ -76,10 +90,10 @@ def test_line_trpv():
     assert damage == 1 * 4 + 1 * 3 + 5 * 2 + 1 * 1
     assert t == 2 + 2 + 4
 
-    agents = [FixedVelocityAgent(loc=Point(-1, 100), v=0),
-              FixedVelocityAgent(loc=Point(-2, 2), v=0),
-              FixedVelocityAgent(loc=Point(-4, -1), v=0),
-              FixedVelocityAgent(loc=Point(-5, -100), v=0)]
+    agents = [DeterministicAgent(loc=Point(-1, 100), v=0),
+              DeterministicAgent(loc=Point(-2, 2), v=0),
+              DeterministicAgent(loc=Point(-4, -1), v=0),
+              DeterministicAgent(loc=Point(-5, -100), v=0)]
 
     h = 0
     fv = 1
@@ -91,13 +105,13 @@ def test_line_trpv():
     assert damage == 1 * 4 + 3 * 3 + 98 * 2 + 200 * 1
     assert t == 1 + 3 + 98 + 200
 
-    agents = [FixedVelocityAgent(loc=Point(-1, -2), v=0),
-              FixedVelocityAgent(loc=Point(-2, -2.1), v=0),
-              FixedVelocityAgent(loc=Point(-3, -2.2), v=0),
-              FixedVelocityAgent(loc=Point(-4, -2.3), v=0),
-              FixedVelocityAgent(loc=Point(-5, 2), v=0),
-              FixedVelocityAgent(loc=Point(8, -1000), v=0),
-              FixedVelocityAgent(loc=Point(9, 100000), v=0)]
+    agents = [DeterministicAgent(loc=Point(-1, -2), v=0),
+              DeterministicAgent(loc=Point(-2, -2.1), v=0),
+              DeterministicAgent(loc=Point(-3, -2.2), v=0),
+              DeterministicAgent(loc=Point(-4, -2.3), v=0),
+              DeterministicAgent(loc=Point(-5, 2), v=0),
+              DeterministicAgent(loc=Point(8, -1000), v=0),
+              DeterministicAgent(loc=Point(9, 100000), v=0)]
 
     h = 0.1
     fv = 1
@@ -109,10 +123,10 @@ def test_line_trpv():
     assert damage == 2.1 * 7 + 0.1 * 6 + 0.1 * 5 + 0.1 * 4 + 3 * 4.3 + 1002 * 2 + 101000 * 1
     assert t == 2.4 + 4.3 + 1002 + 101000
 
-    agents = [FixedVelocityAgent(loc=Point(-2, -5), v=1),
-              FixedVelocityAgent(loc=Point(3, 4), v=1),
-              FixedVelocityAgent(loc=Point(-10, 5), v=1),
-              FixedVelocityAgent(loc=Point(-10, 6), v=1)]
+    agents = [DeterministicAgent(loc=Point(-2, -5), v=1),
+              DeterministicAgent(loc=Point(3, 4), v=1),
+              DeterministicAgent(loc=Point(-10, 5), v=1),
+              DeterministicAgent(loc=Point(-10, 6), v=1)]
 
     h = -1
     fv = 2
@@ -121,10 +135,10 @@ def test_line_trpv():
     movement = line_trpv(h, fv, agents, makespan)['ys']
     assert len(movement) == len(agents)
 
-    agents = [FixedVelocityAgent(loc=Point(-2, 1), v=1),
-              FixedVelocityAgent(loc=Point(3, 2), v=1),
-              FixedVelocityAgent(loc=Point(-10, 3), v=1),
-              FixedVelocityAgent(loc=Point(-10, 4), v=1)]
+    agents = [DeterministicAgent(loc=Point(-2, 1), v=1),
+              DeterministicAgent(loc=Point(3, 2), v=1),
+              DeterministicAgent(loc=Point(-10, 3), v=1),
+              DeterministicAgent(loc=Point(-10, 4), v=1)]
 
     h = 0
     fv = 2
@@ -138,19 +152,76 @@ def test_line_trpv():
 
 
 def test_flow_moves():
-    agents = [FixedVelocityAgent(loc=Point(-1, 9.6), v=1),
-              FixedVelocityAgent(loc=Point(-6, 2), v=1),
-              FixedVelocityAgent(loc=Point(10, 2), v=1),
-              FixedVelocityAgent(loc=Point(8, -1), v=1)]
+    print('testing flow moves..')
+    agents = [DeterministicAgent(loc=Point(-1, 9.6), v=1),
+              DeterministicAgent(loc=Point(-6, 2), v=1),
+              DeterministicAgent(loc=Point(10, 2), v=1),
+              DeterministicAgent(loc=Point(8, -1), v=1)]
 
     robots = [BasicRobot(Point(-1, 9), 2, 1), BasicRobot(Point(3, 8), 2, 1)]
 
-    fm = flow_moves(robots, agents, 10)
+    fm = static_lack_moves(robots, agents, 10)
     movement, disabled = fm['movement'], fm['disabled']
 
     assert movement[robots[0]] == [Point(-6, 10)]
     assert movement[robots[1]] == [Point(10, 10), Point(8, 10)]
     assert set(disabled) == set(agents[1:])
+
+
+def test_P_U_generation():
+    b, br, bl = 10, 10, 0
+    advance_distribution = (0.2, 0.6, 0.2)
+
+    agents = [StochasticAgent(Point(3, 2), 1, advance_distribution),
+              StochasticAgent(Point(5, 2), 1, advance_distribution),
+              StochasticAgent(Point(6, 8), 1, advance_distribution),
+              StochasticAgent(Point(8, 4), 1, advance_distribution)]
+
+    robots = [BasicRobot(Point(1, 1), 2, 1),
+              BasicRobot(Point(2, 0), 2, 1),
+              BasicRobot(Point(4, 1), 2, 1)]
+
+    environment = StochasticEnvironment(agents=agents, robots=robots, top_border=b, left_border=bl, right_border=br)
+
+    Pa = environment.get_Pa(agents[0])
+    Ua = environment.get_Ua(agents[0])
+    PA = environment.PA
+    UA = environment.UA
+
+    assert (Ua >= Pa).all()
+    assert (UA >= PA).all()
+    assert (PA >= Pa).all()
+    assert (UA >= Ua).all()
+
+    Pa_sum = environment.get_Pa(agents[0])
+    Ua_sum = environment.get_Ua(agents[0])
+    for agent in agents[1:]:
+        Pa_sum += environment.get_Pa(agent)
+        Ua_sum += environment.get_Ua(agent)
+
+    assert (abs(PA - Pa_sum) < Consts.EPSILON).all()
+    assert (abs(UA - Ua_sum) < Consts.EPSILON).all()
+
+    # show_grid(Pa[1], f'Pa of {agents[0]} at time {1}')
+    # show_grid(Ua[1], f'Ua of {agents[0]} at time {1}')
+    # show_grid(PA[1], f'PA matrix at time {1}')
+    # show_grid(UA[1], f'UA matrix at time {1}')
+
+
+def test_stochastic_lack_moves():
+    agents = [StochasticAgent(loc=Point(2, 4), v=1, advance_distribution=[0, 1, 0]),
+              StochasticAgent(loc=Point(5, 3), v=1, advance_distribution=[0, 1, 0]),
+              StochasticAgent(loc=Point(7, 4), v=1, advance_distribution=[0, 1, 0])]
+
+    robots = [TimingRobot(Point(2, 0), fv=2),
+              TimingRobot(Point(5, 0), fv=2),
+              TimingRobot(Point(7, 0), fv=2)]
+
+    env = StochasticEnvironment(agents=agents, robots=robots, top_border=20,
+                                right_border=10, left_border=0)
+
+    planner = StochasticStaticLackPlanner()
+    movement, time, damage, disabled, timing = planner.plan(env)
 
 
 if __name__ == '__main__':
@@ -161,3 +232,5 @@ if __name__ == '__main__':
     test_line_trpv()
     test_map_into_2_pows()
     test_flow_moves()
+    test_P_U_generation()
+    test_stochastic_lack_moves()
