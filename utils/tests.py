@@ -209,28 +209,31 @@ def test_P_U_generation():
 
 
 def test_stochastic_lack_moves():
-    agents = [StochasticAgent(loc=Point(2, 4), v=1, advance_distribution=[0, 1, 0]),
-              StochasticAgent(loc=Point(5, 3), v=1, advance_distribution=[0, 1, 0]),
-              StochasticAgent(loc=Point(7, 4), v=1, advance_distribution=[0, 1, 0])]
+    agents = [StochasticAgent(loc=Point(1, 1), v=1, advance_distribution=[0, 1, 0]),
+              StochasticAgent(loc=Point(3, 1), v=1, advance_distribution=[0, 1, 0]),
+              StochasticAgent(loc=Point(4, 0), v=1, advance_distribution=[0, 1, 0])]
 
-    robots = [TimingRobot(Point(2, 0), fv=2),
-              TimingRobot(Point(5, 0), fv=2),
-              TimingRobot(Point(7, 0), fv=2)]
+    robots = [TimingRobot(Point(1, 0), fv=2),
+              TimingRobot(Point(3, 0), fv=2)]
 
-    env = StochasticEnvironment(agents=agents, robots=robots, top_border=20,
-                                right_border=10, left_border=0)
+    env = StochasticEnvironment(agents=agents, robots=robots, top_border=5,
+                                right_border=5, left_border=0)
 
     planner = StochasticStaticLackPlanner()
     movement, time, damage, disabled, timing = planner.plan(env)
 
+    assert damage == 4
+    assert disabled == 3
+    assert time == 2
+
 
 if __name__ == '__main__':
-    test_direction()
-    test_shifted()
-    test_distance()
-    test_meeting_height()
-    test_line_trpv()
-    test_map_into_2_pows()
-    test_flow_moves()
-    test_P_U_generation()
+    # test_direction()
+    # test_shifted()
+    # test_distance()
+    # test_meeting_height()
+    # test_line_trpv()
+    # test_map_into_2_pows()
+    # test_flow_moves()
+    # test_P_U_generation()
     test_stochastic_lack_moves()

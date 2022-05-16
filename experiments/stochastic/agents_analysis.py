@@ -9,7 +9,7 @@ from planners.planner import Planner
 from planners.stochastic.partial_blockage.stochastic_static_lack_planner import StochasticStaticLackPlanner
 from utils.functions import *
 
-with open('dev_config.json') as json_file:
+with open('config.json') as json_file:
     config = json.load(json_file)
 
 
