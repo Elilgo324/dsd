@@ -168,7 +168,7 @@ def test_flow_moves():
 
 
 def test_P_U_generation():
-    b, br = 10, 10
+    b, br, bl = 10, 10, 0
     advance_distribution = (0.2, 0.6, 0.2)
 
     agents = [StochasticAgent(Point(3, 2), 1, advance_distribution),
@@ -180,7 +180,7 @@ def test_P_U_generation():
               BasicRobot(Point(2, 0), 2, 1),
               BasicRobot(Point(4, 1), 2, 1)]
 
-    environment = StochasticEnvironment(agents=agents, robots=robots, top_border=b, left_border=0, right_border=br)
+    environment = StochasticEnvironment(agents=agents, robots=robots, top_border=b, left_border=bl, right_border=br)
 
     Pa = environment.get_Pa(agents[0])
     Ua = environment.get_Ua(agents[0])
@@ -192,7 +192,13 @@ def test_P_U_generation():
     assert (PA >= Pa).all()
     assert (UA >= Ua).all()
 
-    # show_grid(Pa[1], f'Pa of {agents[0]} at time {1}')
+    delta = 1
+    a = abs(PA - np.sum([environment.get_Pa(a) for a in agents]))
+    assert (abs(PA - np.sum([environment.get_Pa(a) for a in agents])) < delta).all()
+    assert (abs(UA - np.sum([environment.get_Ua(a) for a in agents])) < delta).all()
+
+
+# show_grid(Pa[1], f'Pa of {agents[0]} at time {1}')
     # show_grid(Ua[1], f'Ua of {agents[0]} at time {1}')
     # show_grid(PA[1], f'PA matrix at time {1}')
     # show_grid(UA[1], f'UA matrix at time {1}')

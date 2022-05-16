@@ -33,28 +33,28 @@ class StochasticEnvironment(Environment):
         return self._right_border
 
     @property
-    def PA(self):
+    def PA(self) -> np.ndarray:
         if self._PA is None:
             self._PA = self._generate_PA()
         return self._PA
 
     @property
-    def UA(self):
+    def UA(self) -> np.ndarray:
         if self._UA is None:
             self._UA = self._generate_UA()
         return self._UA
 
-    def get_Pa(self, agent: StochasticAgent):
+    def get_Pa(self, agent: StochasticAgent) -> np.ndarray:
         if self._Pas[agent] is  None:
             self._Pas[agent] = self._generate_PA([agent])
         return self._Pas[agent]
 
-    def get_Ua(self, agent: StochasticAgent):
+    def get_Ua(self, agent: StochasticAgent) -> np.ndarray:
         if self._Uas[agent] is None:
             self._Uas[agent] = self._generate_UA(PA=self.get_Pa(agent))
         return self._Uas[agent]
 
-    def _generate_PA(self, agents: List[StochasticAgent] = None):
+    def _generate_PA(self, agents: List[StochasticAgent] = None) -> np.ndarray:
         if agents is None:
             agents = self.agents
 
