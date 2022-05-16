@@ -23,25 +23,35 @@ versus a large swarm.
 
 TODO add link to paper
 
-## Deterministic case
+## Deterministic movement
 
 ### Full-blockage case
 
 #### StaticLine
 
-![StaticLinePlanner](readme_gifs/StaticLinePlanner_readme.gif)
+![StaticLinePlanner](readme_gifs/StaticLine_rm.gif)
 
 #### TravelingLine
 
+![StaticLinePlanner](readme_gifs/TravelingLine_rm.gif)
+
 #### SeparateTraveling
+
+![StaticLinePlanner](readme_gifs/SeparateTraveling_rm.gif)
 
 ### Partial-blockage
 
 #### StaticLineLack
 
+![StaticLinePlanner](readme_gifs/StaticLineLack_rm.gif)
+
 #### SeparateStaticLack
 
-#### SeparateAdditiveLack
+![StaticLinePlanner](readme_gifs/SeparateStaticLack_rm.gif)
+
+#### AdditiveStaticLack
+
+![StaticLinePlanner](readme_gifs/AdditiveStaticLack_rm.gif)
 
 ### BaseLine
 
@@ -49,7 +59,18 @@ TODO add link to paper
 
 #### KmeansAssignment
 
-## Stochastic case
+## Stochastic movement
+
+#### StochasticStaticLack
+
+#### StochasticAdditiveLack
+
+#### TBD
+
+### BaseLine
+
+#### StochasticIterativeAssignment
+
 
 
 
