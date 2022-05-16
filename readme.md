@@ -8,7 +8,7 @@ TODO abstract
 
 #### StaticLine
 
-![StaticLinePlanner](StaticLinePlanner_readme.gif)
+![StaticLinePlanner](readme_gifs/StaticLinePlanner_readme.gif)
 
 #### TravelingLine
 
