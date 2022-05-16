@@ -9,10 +9,10 @@ class StochasticStaticLackPlanner(Planner):
     def plan(self, env: StochasticEnvironment):
         robots = env.robots
 
-        PA = env._generate_PA()
-        UA = env._generate_UA()
+        PA = env.PA
+        UA = env.UA
 
-        T,num_rows,num_cols = UA.shape
+        T, num_rows, num_cols = UA.shape
 
         flow_per_h = {h: stochastic_lack_moves(robots, h, UA, PA) for h in range(num_rows)}
         utility_per_h = {h: flow_per_h[h]['utility'] for h in range(num_rows)}
@@ -28,7 +28,7 @@ class StochasticStaticLackPlanner(Planner):
         return movement_per_h[h_opt], \
                active_time_per_h[h_opt], \
                maximal_damage - utility_per_h[h_opt], \
-               expected_disabled_per_h[h_opt],\
+               expected_disabled_per_h[h_opt], \
                timing_per_h[h_opt]
 
     def __str__(self):

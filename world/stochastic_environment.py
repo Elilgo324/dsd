@@ -2,9 +2,9 @@ from typing import List, Tuple, Union, cast
 
 import numpy as np
 
-from environment.environment import Environment
-from environment.robots.basic_robot import BasicRobot
-from environment.agents.stochastic_agent import StochasticAgent
+from world.environment import Environment
+from world.robots.basic_robot import BasicRobot
+from world.agents.stochastic_agent import StochasticAgent
 
 
 class StochasticEnvironment(Environment):

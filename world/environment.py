@@ -1,8 +1,8 @@
 from copy import deepcopy
 from typing import List, Tuple, Union
 
-from environment.agents.base_agent import BaseAgent
-from environment.robots.basic_robot import BasicRobot
+from world.agents.base_agent import BaseAgent
+from world.robots.basic_robot import BasicRobot
 
 
 class Environment:
@@ -67,9 +67,8 @@ class Environment:
             self._acc_damage += agent.v
 
         # check disablement and escaped
-        agents_to_remove = []
         for agent in self.agents:
-            # if agent cross border
+            # if agent crosses border
             if agent.y >= self._border:
                 self.agents.remove(agent)
                 self._agents_escaped += 1
