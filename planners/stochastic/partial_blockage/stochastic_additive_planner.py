@@ -18,6 +18,8 @@ class StochasticAdditivePlanner(Planner):
         fv = robots[0].fv
         r = robots[0].d
         advance_distribution = agents[0].advance_distribution
+        bl = env.left_border
+        br = env.right_border
 
         movement = {robot: [] for robot in robots}
         timing = {robot: [] for robot in robots}
@@ -37,7 +39,7 @@ class StochasticAdditivePlanner(Planner):
             new_robots = [BasicRobot(cur_movement[robot][-1], fv, r) for robot in new_robots]
             noise = sum([choices([-1, 0, 1], weights=advance_distribution, k=active_time)[0] for _ in range(active_time)])
             new_agents = [StochasticAgent(Point(agent.x + noise, agent.y + v * active_time),
-                                          v, advance_distribution) for agent in wave
+                                          v, advance_distribution, bl, br) for agent in wave
                           if agent.y + v * active_time < env.top_border]
             new_env = StochasticEnvironment(robots=new_robots, agents=new_agents, left_border=env.left_border,
                                             right_border=env.right_border, top_border=env.top_border)

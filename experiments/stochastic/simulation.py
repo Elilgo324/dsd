@@ -13,13 +13,15 @@ with open('config.json') as json_file:
 
 def run(planner: Planner) -> None:
     agents = [StochasticAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
-                                              config['y_buffer'], config['y_buffer'] + config['y_size_init'], True),
-                                 config['agent_speed'], config['advance_distribution']) for _ in range(config['num_agents'])]
+                                           config['y_buffer'], config['y_buffer'] + config['y_size_init'], True),
+                              config['agent_speed'], config['advance_distribution'], 0, config['x_size']) for _ in
+              range(config['num_agents'])]
 
     robots = [TimingRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer'], True),
-                         config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
+                          config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
 
-    env = StochasticEnvironment(agents=agents, robots=robots, top_border=config['y_size']+config['y_buffer'], right_border=config['x_size'] + config['x_buffer'], left_border=config['x_buffer'])
+    env = StochasticEnvironment(agents=agents, robots=robots, top_border=config['y_size'] + config['y_buffer'],
+                                right_border=config['x_size'] + config['x_buffer'], left_border=config['x_buffer'])
 
     movement, time, damage, disabled, timing = planner.plan(env)
 

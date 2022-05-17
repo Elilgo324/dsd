@@ -2,6 +2,7 @@ import json
 import time
 from random import seed
 
+from planners.stochastic.partial_blockage.stochastic_additive_planner import StochasticAdditivePlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
@@ -16,7 +17,7 @@ with open('config.json') as json_file:
 def run(planner: Planner):
     agents = [StochasticAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
                                            config['y_buffer'], config['y_buffer'] + config['y_size_init']),
-                              config['agent_speed'], config['advance_distribution']) for _ in
+                              config['agent_speed'], config['advance_distribution'], 0, config['x_size']) for _ in
               range(config['num_agents'])]
 
     robots = [TimingRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
@@ -42,10 +43,10 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StochasticStaticLackPlanner()]
+    planners = [StochasticStaticLackPlanner(), StochasticAdditivePlanner()]
 
     for planner in planners:
-        for v in [400, 500, 600, 700, 800, 900, 1000]:
+        for v in [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'*** *** v={v} *** ***')
             for s in range(3):
                 seed(s)
