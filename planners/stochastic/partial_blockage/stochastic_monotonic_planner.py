@@ -14,22 +14,20 @@ class StochasticMonotonicPlanner(Planner):
 
         T, num_rows, num_cols = UA.shape
 
-        flow_per_h = {h: stochastic_monotonic_moves(robots, UA, PA) for h in range(num_rows)}
-        utility_per_h = {h: flow_per_h[h]['utility'] for h in range(num_rows)}
-        movement_per_h = {h: flow_per_h[h]['movement'] for h in range(num_rows)}
-        timing_per_h = {h: flow_per_h[h]['timing'] for h in range(num_rows)}
-        active_time_per_h = {h: flow_per_h[h]['active_time'] for h in range(num_rows)}
-        expected_disabled_per_h = {h: flow_per_h[h]['expected_disabled'] for h in range(num_rows)}
+        flow_data = stochastic_monotonic_moves(robots, UA, PA)
+        utility = flow_data['utility']
+        movement = flow_data['movement']
+        timing = flow_data['timing']
+        active_time = flow_data['active_time']
+        expected_disabled = flow_data['expected_disabled']
 
         maximal_damage = sum([env.top_border - agent.y for agent in env.agents])
 
-        h_opt = max(list(range(num_rows)), key=lambda h: utility_per_h[h])
-
-        return movement_per_h[h_opt], \
-               active_time_per_h[h_opt], \
-               maximal_damage - utility_per_h[h_opt], \
-               expected_disabled_per_h[h_opt], \
-               timing_per_h[h_opt]
+        return movement, \
+               active_time, \
+               maximal_damage - utility, \
+               expected_disabled, \
+               timing
 
     def __str__(self):
-        return 'StochasticStaticLackPlanner'
+        return 'StochasticMonotonicPlanner'

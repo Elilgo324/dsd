@@ -237,6 +237,10 @@ def stochastic_monotonic_moves(robots: List['BasicRobot'], U, PA):
             g.add_edge(f'[{r},{c}]_o', f'[{r + 2},{c}]_i', weight=0, capacity=len(robots))
             g.add_edge(f'[{r},{c}]_i', f'[{r + 2},{c}]_i', weight=0, capacity=len(robots))
 
+    for robot in robots:
+        for c in range(n_cols):
+            g.add_edge(str(robot), f'[{0},{robot.x}]_i', weight=0, capacity=1)
+
     # add dummy source and target to use flow
     g.add_node('s', color='orange')
     g.add_node('t', color='orange')
