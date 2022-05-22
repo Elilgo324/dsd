@@ -321,7 +321,7 @@ def stochastic_monotonic_moves(robots: List['BasicRobot'], U, PA):
             'expected_disabled': expected_disabled}
 
 
-def monotonic_block_lack_moves(robots: List['BasicRobot'], U, PA):
+def stochastic_monotonic_block_moves(robots: List['BasicRobot'], U, PA):
     n_time, n_rows, n_cols = U.shape
 
     g = nx.DiGraph()
@@ -329,6 +329,12 @@ def monotonic_block_lack_moves(robots: List['BasicRobot'], U, PA):
     # create robots
     for i_robot, robot in enumerate(robots):
         g.add_node(str(robot) + f'_{i_robot}', color='blue', pos=np.array([robot.x, robot.y]))
+
+    # connect robots to block
+
+    # build block moves graph
+
+    # apply longest path algorithm
 
     # create utility cells
     for r in range(0, n_rows, 2):
