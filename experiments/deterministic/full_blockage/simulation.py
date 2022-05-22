@@ -1,5 +1,6 @@
 import json
 from math import ceil
+from random import seed
 
 from world.agents.deterministic_agent import DeterministicAgent
 from planners.deterministic.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
@@ -45,6 +46,8 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
+    seed(39)
+
     # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
     planners = [KmeansAssignmentPlanner() for _ in range(1)]
     for planner in planners:
