@@ -12,8 +12,6 @@ class StochasticMonotonicBlockPlanner(Planner):
         PA = env.PA
         UA = env.UA
 
-        T, num_rows, num_cols = UA.shape
-
         flow_data = stochastic_monotonic_block_moves(robots, UA, PA)
         utility = flow_data['utility']
         movement = flow_data['movement']
@@ -30,4 +28,4 @@ class StochasticMonotonicBlockPlanner(Planner):
                timing
 
     def __str__(self):
-        return 'StochasticMonotonicPlanner'
+        return 'MonotonicBlockPlanner'

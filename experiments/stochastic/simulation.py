@@ -1,5 +1,6 @@
 import json
 
+from planners.stochastic.partial_blockage.stochastic_monotonic_block_planner import StochasticMonotonicBlockPlanner
 from planners.stochastic.partial_blockage.stochastic_monotonic_planner import StochasticMonotonicPlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
@@ -44,7 +45,8 @@ def run(planner: Planner) -> None:
 
 
 if __name__ == '__main__':
-    planners = [StochasticMonotonicPlanner() for _ in range(1)]
+    planners = [StochasticMonotonicBlockPlanner() for _ in range(1)]
+
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)

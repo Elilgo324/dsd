@@ -4,6 +4,7 @@ from typing import List, Tuple
 import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
+from networkx import path_weight
 
 from world.agents.base_agent import BaseAgent
 from world.robots.basic_robot import BasicRobot
@@ -323,112 +324,50 @@ def stochastic_monotonic_moves(robots: List['BasicRobot'], U, PA):
 
 def stochastic_monotonic_block_moves(robots: List['BasicRobot'], U, PA):
     n_time, n_rows, n_cols = U.shape
+    max_damage = n_cols * 1_000
+    block_center = (max([r.y for r in robots]), int(n_cols / 2))
 
     g = nx.DiGraph()
-
-    # create robots
-    for i_robot, robot in enumerate(robots):
-        g.add_node(str(robot) + f'_{i_robot}', color='blue', pos=np.array([robot.x, robot.y]))
-
-    # connect robots to block
-
-    # build block moves graph
-
-    # apply longest path algorithm
+    g.add_node(block_center)
 
     # create utility cells
     for r in range(0, n_rows, 2):
         t = int(r / 2)
         for c in range(n_cols):
-            g.add_node(f'[{r},{c}]_i', row=r, col=c)
-            g.add_node(f'[{r},{c}]_of', row=r, col=c)
-            g.add_node(f'[{r},{c}]_ol', row=r, col=c)
-            g.add_node(f'[{r},{c}]_or', row=r, col=c)
+            g.add_node((r,c))
 
             # the weight needs to be an integer
-            g.add_edge(f'[{r},{c}]_i', f'[{r},{c}]_of',
-                       weight=-int(10_000 * (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c])), capacity=1)
-            g.add_edge(f'[{r},{c}]_of', f'[{r + 2},{c}]_i', weight=0, capacity=len(robots))
-            g.add_edge(f'[{r},{c}]_i', f'[{r + 2},{c}]_i', weight=-1, capacity=len(robots))
+            g.add_edge((r,c), (r+2,c),
+                       u=max_damage - (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c]),
+                       p=PA[int(t / 2), r, c] + PA[int(t / 2), r + 1, c])
 
             if c > 1:
-                g.add_edge(f'[{r},{c}]_i', f'[{r},{c}]_ol',
-                           weight=-int(10_000 * (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c - 1])), capacity=1)
-                g.add_edge(f'[{r},{c}]_ol', f'[{r + 2},{c - 1}]_i', weight=0, capacity=len(robots))
-                g.add_edge(f'[{r},{c}]_i', f'[{r + 2},{c - 1}]_i', weight=0, capacity=len(robots))
+                g.add_edge((r,c), (r+2,c-1),
+                           u=max_damage - (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c - 1]),
+                           p=PA[int(t / 2), r, c] + PA[int(t / 2), r + 1, c - 1])
 
             if c < n_cols - 1:
-                g.add_edge(f'[{r},{c}]_i', f'[{r},{c}]_or',
-                           weight=-int(10_000 * (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c + 1])), capacity=1)
-                g.add_edge(f'[{r},{c}]_or', f'[{r + 2},{c + 1}]_i', weight=0, capacity=len(robots))
-                g.add_edge(f'[{r},{c}]_i', f'[{r + 2},{c + 1}]_i', weight=0, capacity=len(robots))
+                g.add_edge((r,c), (r+2,c+1),
+                           u=max_damage - (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c + 1]),
+                           p=PA[int(t / 2), r, c] + PA[int(t / 2), r + 1, c + 1])
 
-    for i_robot, robot in enumerate(robots):
-        for c in range(n_cols):
-            g.add_edge(str(robot) + f'_{i_robot}', f'[{0},{robot.x}]_i', weight=0, capacity=1)
-
-    # add dummy source and target to use flow
-    g.add_node('s', color='orange')
     g.add_node('t', color='orange')
 
-    for i_robot, robot in enumerate(robots):
-        g.add_edge('s', str(robot) + f'_{i_robot}', weight=0, capacity=1)
-
     for c in range(n_cols):
-        g.add_edge(f'[{n_rows - 1},{c}]_of', 't', weight=0, capacity=len(robots))
-        g.add_edge(f'[{n_rows - 1},{c}]_ol', 't', weight=0, capacity=len(robots))
-        g.add_edge(f'[{n_rows - 1},{c}]_or', 't', weight=0, capacity=len(robots))
-        g.add_edge(f'[{n_rows - 1},{c}]_i', 't', weight=0, capacity=len(robots))
+        g.add_edge((n_rows - 1,c), 't', u=0, p=0)
+        g.add_edge((n_rows - 2,c), 't', u=0, p=0)
 
-        g.add_edge(f'[{n_rows - 2},{c}]_of', 't', weight=0, capacity=len(robots))
-        g.add_edge(f'[{n_rows - 2},{c}]_ol', 't', weight=0, capacity=len(robots))
-        g.add_edge(f'[{n_rows - 2},{c}]_or', 't', weight=0, capacity=len(robots))
-        g.add_edge(f'[{n_rows - 2},{c}]_i', 't', weight=0, capacity=len(robots))
-
-    flow = nx.max_flow_min_cost(g, 's', 't')
-
-    # delete all edges without flow
-    edges_to_delete = []
-    for key1, val1 in flow.items():
-        for key2, val2 in val1.items():
-            if val2 == 0:
-                edges_to_delete.append((key1, key2))
-    for key1, key2 in edges_to_delete:
-        g.remove_edge(key1, key2)
-
-    nodes_rows = nx.get_node_attributes(g, 'row')
-    nodes_cols = nx.get_node_attributes(g, 'col')
+    path = nx.shortest_path(g, block_center, 't', weight='u')[:-1]
 
     # calc movement and disabled
-    active_time = 0
+    active_time = int(n_time / 2)
     movement = {robot: [] for robot in robots}
     timing = {robot: [] for robot in robots}
-    expected_disabled = 0
-    expected_utility = 0
-    for i_robot, robot in enumerate(robots):
-        next = str(robot) + f'_{i_robot}'
-
-        while True:
-            prev = next
-            next = list(g.successors(next))[0]
-            flow[prev][next] -= 1
-            if flow[prev][next] == 0:
-                g.remove_edge(prev, next)
-
-            if next == 't':
-                break
-
-            cur_row = nodes_rows[next]
-            cur_col = nodes_cols[next]
-            cur_time = int(cur_row / 2)
-            if len(movement[robot]) == 0 or (movement[robot][-1].x, movement[robot][-1].y) != (cur_col, cur_row):
-                movement[robot].append(Point(cur_col, cur_row))
-                timing[robot].append(cur_time)
-                expected_disabled += PA[cur_time][cur_row][cur_col]
-                expected_utility += U[cur_time][cur_row][cur_col]
-                PA[cur_time][cur_row][cur_col] = 0
-                U[cur_time][cur_row][cur_col] = 0
-                active_time = max(active_time, cur_time)
+    expected_disabled = path_weight(g, path, weight='p')
+    expected_utility = -(path_weight(g, path, weight='u') - (len(path)-1) * max_damage)
+    for robot in robots:
+        movement[robot] = [Point(x=p[1],y=p[0]) for p in path]
+        timing[robot] = list(range(len(path)))
 
     return {'movement': movement,
             'timing': timing,
