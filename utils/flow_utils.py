@@ -9,6 +9,7 @@ from networkx import path_weight
 from world.agents.base_agent import BaseAgent
 from world.robots.basic_robot import BasicRobot
 from utils.point import Point
+from utils.consts import Consts
 
 
 def static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
@@ -326,6 +327,8 @@ def stochastic_monotonic_block_moves(robots: List['BasicRobot'], U, PA):
     n_time, n_rows, n_cols = U.shape
     max_damage = n_cols * 1_000
     block_center = (max([r.y for r in robots]), int(n_cols / 2))
+    block_size = sum([r.d for r in robots])
+    half_block = int(block_size / 2)
 
     g = nx.DiGraph()
     g.add_node(block_center)
@@ -333,29 +336,37 @@ def stochastic_monotonic_block_moves(robots: List['BasicRobot'], U, PA):
     # create utility cells
     for r in range(0, n_rows, 2):
         t = int(r / 2)
-        for c in range(n_cols):
-            g.add_node((r,c))
+        for c in range(half_block, n_cols - half_block):
+            g.add_node((r, c))
 
-            # the weight needs to be an integer
-            g.add_edge((r,c), (r+2,c),
-                       u=max_damage - (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c]),
-                       p=PA[int(t / 2), r, c] + PA[int(t / 2), r + 1, c])
+            # -epsilon to encourage moving forward
+            g.add_edge((r, c), (r + 2, c),
+                       u=max_damage - sum([U[int(t / 2), r, c + i] for i in range(-half_block, half_block + 1)])
+                         - sum([U[int(t / 2), r + 1, c + i] for i in range(-half_block, half_block + 1)]) - Consts.EPSILON,
+                       p=sum([PA[int(t / 2), r, c + i] for i in range(-half_block, half_block + 1)])
+                         + sum([PA[int(t / 2), r + 1, c + i] for i in range(-half_block, half_block + 1)]))
 
-            if c > 1:
-                g.add_edge((r,c), (r+2,c-1),
-                           u=max_damage - (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c - 1]),
-                           p=PA[int(t / 2), r, c] + PA[int(t / 2), r + 1, c - 1])
+            if c > 1 + half_block:
+                g.add_edge((r, c), (r + 2, c - 1),
+                           u=max_damage - sum(
+                               [U[int(t / 2), r, c + i - 1] for i in range(-half_block, half_block + 1)])
+                             - sum([U[int(t / 2), r + 1, c + i] for i in range(-half_block, half_block + 1)]),
+                           p=sum([PA[int(t / 2), r, c + i - 1] for i in range(-half_block, half_block + 1)])
+                             + sum([PA[int(t / 2), r + 1, c + i] for i in range(-half_block, half_block + 1)]))
 
-            if c < n_cols - 1:
-                g.add_edge((r,c), (r+2,c+1),
-                           u=max_damage - (U[int(t / 2), r, c] + U[int(t / 2), r + 1, c + 1]),
-                           p=PA[int(t / 2), r, c] + PA[int(t / 2), r + 1, c + 1])
+            if c < n_cols - 1 - half_block:
+                g.add_edge((r, c), (r + 2, c + 1),
+                           u=max_damage - sum(
+                               [U[int(t / 2), r, c + i + 1] for i in range(-half_block, half_block + 1)])
+                             - sum([U[int(t / 2), r + 1, c + i] for i in range(-half_block, half_block + 1)]),
+                           p=sum([PA[int(t / 2), r, c + i + 1] for i in range(-half_block, half_block + 1)])
+                             + sum([PA[int(t / 2), r + 1, c + i] for i in range(-half_block, half_block + 1)]))
 
     g.add_node('t', color='orange')
 
     for c in range(n_cols):
-        g.add_edge((n_rows - 1,c), 't', u=0, p=0)
-        g.add_edge((n_rows - 2,c), 't', u=0, p=0)
+        g.add_edge((n_rows - 1, c), 't', u=0, p=0)
+        g.add_edge((n_rows - 2, c), 't', u=0, p=0)
 
     path = nx.shortest_path(g, block_center, 't', weight='u')[:-1]
 
@@ -364,9 +375,9 @@ def stochastic_monotonic_block_moves(robots: List['BasicRobot'], U, PA):
     movement = {robot: [] for robot in robots}
     timing = {robot: [] for robot in robots}
     expected_disabled = path_weight(g, path, weight='p')
-    expected_utility = -(path_weight(g, path, weight='u') - (len(path)-1) * max_damage)
-    for robot in robots:
-        movement[robot] = [Point(x=p[1],y=p[0]) for p in path]
+    expected_utility = -(path_weight(g, path, weight='u') - (len(path) - 1) * max_damage)
+    for i_robot, robot in enumerate(robots):
+        movement[robot] = [Point(x=p[1] - half_block + i_robot, y=p[0]) for p in path]
         timing[robot] = list(range(len(path)))
 
     return {'movement': movement,

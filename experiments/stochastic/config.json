@@ -9,7 +9,7 @@
   "agent_speed": 1,
   "robot_speed": 2,
   "disablement_range": 1,
-  "advance_distribution": [0, 1, 0]
+  "advance_distribution": [0.1, 0.8, 0.1]
 }
 
 
