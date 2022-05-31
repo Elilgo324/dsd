@@ -1,7 +1,5 @@
 import json
 
-from planners.stochastic.partial_blockage.stochastic_monotonic_block_planner import StochasticMonotonicBlockPlanner
-from planners.stochastic.partial_blockage.stochastic_monotonic_planner import StochasticMonotonicPlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
@@ -14,12 +12,13 @@ with open('config.json') as json_file:
 
 
 def run(planner: Planner) -> None:
-    agents = [StochasticAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
-                                           config['y_buffer'], config['y_buffer'] + config['y_size_init'], True),
-                              config['agent_speed'], config['advance_distribution'], 0, config['x_size']) for _ in
+    agents = [StochasticAgent(loc=sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
+                                               config['y_buffer'], config['y_buffer'] + config['y_size_init'], True),
+                              v=config['agent_speed'],
+                              sigma=config['sigma']) for _ in
               range(config['num_agents'])]
 
-    robots = [TimingRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer'], True),
+    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer'], True),
                           config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
 
     env = StochasticEnvironment(agents=agents, robots=robots, top_border=config['y_size'] + config['y_buffer'],
@@ -29,7 +28,7 @@ def run(planner: Planner) -> None:
 
     for r in robots:
         r.set_movement(movement[r])
-        r.set_timing(timing[r])
+        # r.set_timing(timing[r])
 
     is_finished = False
     while not is_finished:
@@ -45,7 +44,7 @@ def run(planner: Planner) -> None:
 
 
 if __name__ == '__main__':
-    planners = [StochasticMonotonicBlockPlanner() for _ in range(1)]
+    planners = [StochasticStaticLackPlanner() for _ in range(1)]
 
     for planner in planners:
         print(f'running {str(planner)} ..')

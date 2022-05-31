@@ -1,35 +1,38 @@
-from typing import Dict
-
-from world.stochastic_environment import StochasticEnvironment
 from planners.planner import Planner
-from utils.flow_utils import *
+from utils.algorithms import static_lack_moves
+from utils.functions import *
 
 
 class StochasticStaticLackPlanner(Planner):
-    def plan(self, env: StochasticEnvironment):
+    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
+        agents = env.agents
+        b = env.border
+        v = agents[0].v
 
-        PA = env.PA
-        UA = env.UA
+        H = [meeting_height(robot, agent) for agent in agents for robot in robots if meeting_height(robot, agent) < b]
+        if len(H) == 0:
+            return {robot: [robot.loc] for robot in robots}, 0, sum([b - agent.y for agent in agents]), 0
 
-        T, num_rows, num_cols = UA.shape
+        flow_per_h = {h: static_lack_moves(robots, agents, h) for h in H}
+        disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
+        movement_per_h = {h: flow_per_h[h]['movement'] for h in H}
 
-        flow_per_h = {h: stochastic_lack_moves(robots, h, UA, PA) for h in range(num_rows)}
-        utility_per_h = {h: flow_per_h[h]['utility'] for h in range(num_rows)}
-        movement_per_h = {h: flow_per_h[h]['movement'] for h in range(num_rows)}
-        timing_per_h = {h: flow_per_h[h]['timing'] for h in range(num_rows)}
-        active_time_per_h = {h: flow_per_h[h]['active_time'] for h in range(num_rows)}
-        expected_disabled_per_h = {h: flow_per_h[h]['expected_disabled'] for h in range(num_rows)}
+        # calculate line score
+        def damage_score(h):
+            return sum([b - agent.y for agent in agents]) - len(disabled_per_h[h]) * (b - h)
 
-        maximal_damage = sum([env.top_border - agent.y for agent in env.agents])
+        damage_score_per_h = {h: damage_score(h) for h in H}
+        h_opt = min(H, key=lambda h: damage_score_per_h[h])
 
-        h_opt = max(list(range(num_rows)), key=lambda h: utility_per_h[h])
+        completion_time = 0
+        if len(disabled_per_h[h_opt]) > 0:
+            completion_time = (h_opt - min([agent.y for agent in disabled_per_h[h_opt]])) / v
 
         return movement_per_h[h_opt], \
-               active_time_per_h[h_opt], \
-               maximal_damage - utility_per_h[h_opt], \
-               expected_disabled_per_h[h_opt], \
-               timing_per_h[h_opt]
+               completion_time, \
+               damage_score_per_h[h_opt], \
+               len(disabled_per_h[h_opt]), 0
 
     def __str__(self):
         return 'StochasticStaticLackPlanner'

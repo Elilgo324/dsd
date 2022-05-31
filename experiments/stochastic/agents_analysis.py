@@ -2,7 +2,7 @@ import json
 import time
 from random import seed
 
-from planners.stochastic.partial_blockage.stochastic_additive_planner import StochasticAdditivePlanner
+from planners.stochastic.partial_blockage.stochastic_window_planner import StochasticAdditivePlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
@@ -35,18 +35,19 @@ def run(planner: Planner):
                  num_robots=config['num_robots'],
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 active_time=active_time,
+                 active_or_copmletion_time=active_time,
                  planner_time=planning_time,
                  damage=expected_damage,
                  num_disabled=expected_num_disabled,
-                 file_name='agents_results.csv')
+                 file_name='agents_results.csv',
+                 is_active_time=True)
 
 
 if __name__ == '__main__':
     planners = [StochasticStaticLackPlanner(), StochasticAdditivePlanner()]
 
     for planner in planners:
-        for v in [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
+        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'*** *** v={v} *** ***')
             for s in range(3):
                 seed(s)

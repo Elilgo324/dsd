@@ -1,7 +1,5 @@
 from typing import List, Tuple, Union, cast
 
-import numpy as np
-
 from world.environment import Environment
 from world.robots.basic_robot import BasicRobot
 from world.agents.stochastic_agent import StochasticAgent
@@ -14,10 +12,6 @@ class StochasticEnvironment(Environment):
         self._top_border = top_border
         self._left_border = left_border
         self._right_border = right_border
-        self._PA = None
-        self._UA = None
-        self._Pas = {agent: None for agent in self._agents}
-        self._Uas = {agent: None for agent in self._agents}
 
     @property
     def top_border(self) -> int:
@@ -31,73 +25,46 @@ class StochasticEnvironment(Environment):
     def right_border(self) -> int:
         return self._right_border
 
-    @property
-    def PA(self) -> np.ndarray:
-        if self._PA is None:
-            self._PA = self._generate_PA()
-        return self._PA
+    def advance(self) -> bool:
+        if self._step % 10 == 0:
+            print(f'step {self._step}')
 
-    @property
-    def UA(self) -> np.ndarray:
-        if self._UA is None:
-            self._UA = self._generate_UA()
-        return self._UA
+        self._step += 1
 
-    def get_Pa(self, agent: StochasticAgent) -> np.ndarray:
-        if self._Pas[agent] is None:
-            self._Pas[agent] = self._generate_PA([agent])
-        return self._Pas[agent]
+        for robot in self.robots:
+            robot.advance()
 
-    def get_Ua(self, agent: StochasticAgent) -> np.ndarray:
-        if self._Uas[agent] is None:
-            self._Uas[agent] = self._generate_UA(PA=self.get_Pa(agent))
-        return self._Uas[agent]
+        for agent in self.agents:
+            agent.advance()
+            if agent.x < self.left_border:
+                agent.x = self.left_border
+            elif agent.x > self.right_border:
+                agent.x = self.right_border
 
-    def _generate_PA(self, agents: List[StochasticAgent] = None) -> np.ndarray:
-        if agents is None:
-            agents = self.agents
+            self._acc_damage += agent.v
 
-        left, up, right = agents[0].advance_distribution
+        # check disablement and escaped
+        for agent in self.agents:
+            # if agent crosses border
+            if agent.y >= self._border:
+                self.agents.remove(agent)
+                self._agents_escaped += 1
+                print('agent escaped')
+                continue
 
-        # init 3d matrix of grid rows, cols and time
-        PA = np.zeros((self.top_border, self.top_border, self.right_border))
+            for robot in self.robots:
+                # if robot does not disable
+                if not robot.is_disabling:
+                    continue
 
-        # in t=0 we have prob. 1 of being in the initial loc
-        for agent in agents:
-            PA[0][int(agent.y)][int(agent.x)] = 1
+                # the differences between the velocities can cause the robot
+                # to jump over the agent without disabling it
+                # thus the 1.5 factor which is greater than sqrt(2 range^2)
+                if agent.loc.distance_to(robot.loc) <= 1.4 * robot.d:
+                    self.agents.remove(agent)
+                    self._agents_disabled += 1
+                    print('agent disabled')
+                    break
 
-        # filling the rest times by dp
-        T = int(self.top_border)
-        num_rows = int(self.top_border)
-        num_cols = int(self.right_border)
+        return len(self.agents) == 0
 
-        for t in range(1, T):
-            # fill the rows by dp
-            for row in range(1, num_rows):
-                # handle extreme cells
-                PA[t][row][0] = (left + up) * PA[t - 1][row - 1][0] \
-                                + left * PA[t - 1][row - 1][1]
-                PA[t][row][int(num_cols) - 1] = (right + up) * PA[t - 1][row - 1][int(num_cols) - 1] \
-                                                + right * PA[t - 1][row - 1][int(num_cols) - 2]
-
-                for col in range(1, int(num_cols) - 1):
-                    PA[t][row][col] += left * PA[t - 1][row - 1][col + 1] \
-                                       + up * PA[t - 1][row - 1][col] \
-                                       + right * PA[t - 1][row - 1][col - 1]
-
-        return PA
-
-    def _generate_UA(self, PA=None):
-        if PA is None:
-            PA = self.PA
-
-        T, num_rows, num_cols = PA.shape
-        UA = np.zeros(PA.shape)
-
-        for t in range(T):
-            for r in range(num_rows):
-                for c in range(num_cols):
-                    # the utility is the prevented damage for this cell multiplied by the expected agents amount
-                    UA[t, r, c] = (self.top_border - r) * PA[t, r, c]
-
-        return UA

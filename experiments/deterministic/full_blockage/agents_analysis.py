@@ -36,11 +36,12 @@ def run(planner: Planner):
                  num_robots=num_robots_for_full_blockage,
                  f=config['robot_speed'] / config['agent_speed'],
                  d=config['disablement_range'],
-                 active_time=completion_time,
+                 active_or_copmletion_time=completion_time,
                  planner_time=planning_time,
                  damage=expected_damage,
                  num_disabled=expected_num_disabled,
-                 file_name='agents_results.csv')
+                 file_name='agents_results.csv',
+                 is_active_time=False)
 
 
 if __name__ == '__main__':
@@ -53,12 +54,11 @@ if __name__ == '__main__':
     planners = [KmeansAssignmentPlanner()]
 
     for planner in planners:
-        for v in [50]:
+        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'*** *** v={v} *** ***')
-            for s in range(5):
+            for s in range(30):
                 seed(s)
 
                 config['num_agents'] = v
-                config['num_robots'] = 2
                 print(f'running {str(planner)} with seed {s}..')
                 run(planner)

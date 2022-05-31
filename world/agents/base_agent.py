@@ -15,6 +15,10 @@ class BaseAgent(ABC):
     def x(self) -> float:
         return self._loc.x
 
+    @x.setter
+    def x(self, value) -> None:
+        self._loc.x = value
+
     @property
     def y(self) -> float:
         return self._loc.y

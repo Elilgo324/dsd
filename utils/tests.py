@@ -7,9 +7,8 @@ from world.agents.stochastic_agent import StochasticAgent
 from world.robots.basic_robot import BasicRobot
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
-from planners.stochastic.partial_blockage.stochastic_static_lack_planner import StochasticStaticLackPlanner
 from utils.consts import Consts
-from utils.flow_utils import static_lack_moves
+from utils.algorithms import static_lack_moves
 from utils.functions import meeting_height, line_trpv, map_into_2_pows
 from utils.point import Point
 
@@ -168,72 +167,11 @@ def test_flow_moves():
     assert set(disabled) == set(agents[1:])
 
 
-def test_P_U_generation():
-    b, br, bl = 10, 10, 0
-    advance_distribution = (0.2, 0.6, 0.2)
-
-    agents = [StochasticAgent(Point(3, 2), 1, advance_distribution),
-              StochasticAgent(Point(5, 2), 1, advance_distribution),
-              StochasticAgent(Point(6, 8), 1, advance_distribution),
-              StochasticAgent(Point(8, 4), 1, advance_distribution)]
-
-    robots = [BasicRobot(Point(1, 1), 2, 1),
-              BasicRobot(Point(2, 0), 2, 1),
-              BasicRobot(Point(4, 1), 2, 1)]
-
-    environment = StochasticEnvironment(agents=agents, robots=robots, top_border=b, left_border=bl, right_border=br)
-
-    Pa = environment.get_Pa(agents[0])
-    Ua = environment.get_Ua(agents[0])
-    PA = environment.PA
-    UA = environment.UA
-
-    assert (Ua >= Pa).all()
-    assert (UA >= PA).all()
-    assert (PA >= Pa).all()
-    assert (UA >= Ua).all()
-
-    Pa_sum = environment.get_Pa(agents[0])
-    Ua_sum = environment.get_Ua(agents[0])
-    for agent in agents[1:]:
-        Pa_sum += environment.get_Pa(agent)
-        Ua_sum += environment.get_Ua(agent)
-
-    assert (abs(PA - Pa_sum) < Consts.EPSILON).all()
-    assert (abs(UA - Ua_sum) < Consts.EPSILON).all()
-
-    # show_grid(Pa[1], f'Pa of {agents[0]} at time {1}')
-    # show_grid(Ua[1], f'Ua of {agents[0]} at time {1}')
-    # show_grid(PA[1], f'PA matrix at time {1}')
-    # show_grid(UA[1], f'UA matrix at time {1}')
-
-
-def test_stochastic_lack_moves():
-    agents = [StochasticAgent(loc=Point(1, 1), v=1, advance_distribution=[0, 1, 0]),
-              StochasticAgent(loc=Point(3, 1), v=1, advance_distribution=[0, 1, 0]),
-              StochasticAgent(loc=Point(4, 0), v=1, advance_distribution=[0, 1, 0])]
-
-    robots = [TimingRobot(Point(1, 0), fv=2),
-              TimingRobot(Point(3, 0), fv=2)]
-
-    env = StochasticEnvironment(agents=agents, robots=robots, top_border=5,
-                                right_border=5, left_border=0)
-
-    planner = StochasticStaticLackPlanner()
-    movement, time, damage, disabled, timing = planner.plan(env)
-
-    assert damage == 4
-    assert disabled == 3
-    assert time == 2
-
-
 if __name__ == '__main__':
-    # test_direction()
-    # test_shifted()
-    # test_distance()
-    # test_meeting_height()
-    # test_line_trpv()
-    # test_map_into_2_pows()
-    # test_flow_moves()
-    # test_P_U_generation()
-    test_stochastic_lack_moves()
+    test_direction()
+    test_shifted()
+    test_distance()
+    test_meeting_height()
+    test_line_trpv()
+    test_map_into_2_pows()
+    test_flow_moves()
