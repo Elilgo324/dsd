@@ -9,7 +9,7 @@ from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
 from utils.consts import Consts
 from utils.algorithms import static_lack_moves
-from utils.functions import meeting_height, line_trpv, map_into_2_pows
+from utils.functions import meeting_height, line_trpv, map_into_2_pows, integrate_gauss
 from utils.point import Point
 
 
@@ -167,11 +167,23 @@ def test_flow_moves():
     assert set(disabled) == set(agents[1:])
 
 
+def test_gauss():
+    print('testing gauss..')
+    mu = 1
+    sigma1 = 1
+    sigma2 = 2
+    assert integrate_gauss(mu, sigma1, -1000, 1000) > integrate_gauss(mu, sigma2, -1000, 1000)
+    assert integrate_gauss(mu, sigma1, -10, 10) - integrate_gauss(mu, sigma2, -10, 10) < Consts.EPSILON
+    assert integrate_gauss(mu, sigma1, mu - 2 * sigma1, mu + 2 * sigma1) > 0.95 * integrate_gauss(mu, sigma1, -1000, 1000)
+    assert integrate_gauss(mu, sigma1, mu - sigma1, mu + sigma1) > 0.68 * integrate_gauss(mu, sigma2, -1000, 1000)
+
+
 if __name__ == '__main__':
-    test_direction()
-    test_shifted()
-    test_distance()
-    test_meeting_height()
-    test_line_trpv()
-    test_map_into_2_pows()
-    test_flow_moves()
+    # test_direction()
+    # test_shifted()
+    # test_distance()
+    # test_meeting_height()
+    # test_line_trpv()
+    # test_map_into_2_pows()
+    # test_flow_moves()
+    test_gauss()

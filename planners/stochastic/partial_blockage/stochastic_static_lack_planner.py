@@ -4,7 +4,7 @@ from utils.functions import *
 
 
 class StochasticStaticLackPlanner(Planner):
-    def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
+    def plan(self, env: Environment):
         robots = env.robots
         agents = env.agents
         b = env.border
@@ -12,11 +12,16 @@ class StochasticStaticLackPlanner(Planner):
 
         H = [meeting_height(robot, agent) for agent in agents for robot in robots if meeting_height(robot, agent) < b]
         if len(H) == 0:
-            return {robot: [robot.loc] for robot in robots}, 0, sum([b - agent.y for agent in agents]), 0
+            return {robot: [robot.loc] for robot in robots}, \
+                   0, \
+                   sum([b - agent.y for agent in agents]), \
+                   0,\
+                   {robot: [0] for robot in robots}
 
         flow_per_h = {h: static_lack_moves(robots, agents, h) for h in H}
         disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
         movement_per_h = {h: flow_per_h[h]['movement'] for h in H}
+        timing_per_h = {h: flow_per_h[h]['timing'] for h in H}
 
         # calculate line score
         def damage_score(h):
@@ -32,7 +37,8 @@ class StochasticStaticLackPlanner(Planner):
         return movement_per_h[h_opt], \
                completion_time, \
                damage_score_per_h[h_opt], \
-               len(disabled_per_h[h_opt]), 0
+               len(disabled_per_h[h_opt]), \
+               timing_per_h[h_opt]
 
     def __str__(self):
         return 'StochasticStaticLackPlanner'
