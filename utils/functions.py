@@ -357,6 +357,10 @@ def integrate_gauss(mu, sigma, left, right) -> float:
     value, _ = integrate.quad(gauss, left, right)
     return value
 
+def future_sigma(sigma, stride) -> float:
+    futue_var = sigma**2 * stride
+    return futue_var**0.5
+
 
 def show_grid(M, title_str=None):
     min_val = np.min(M)

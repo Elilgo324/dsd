@@ -101,8 +101,6 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
 
     # create agents divided to in and out
     for agent in agents:
-        key_points = []
-        for key_point in key_points
         g.add_node(str(agent) + '_i', pos=(agent.x - 0.5, agent.y), color='red')
         g.add_node(str(agent) + '_o', pos=(agent.x + 0.5, agent.y), color='red')
         g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=-1, capacity=1)
