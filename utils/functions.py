@@ -350,29 +350,14 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             'num_disabled': expected_num_disabled}
 
 
-def integrate_gauss(mu, sigma, left, right) -> float:
+def integrate_gauss(mu: float, sigma: float, left: float, right: float) -> float:
     def gauss(x):
         return stats.norm.pdf(x, mu, sigma)
 
     value, _ = integrate.quad(gauss, left, right)
     return value
 
-def future_sigma(sigma, stride) -> float:
-    futue_var = sigma**2 * stride
-    return futue_var**0.5
 
-
-def show_grid(M, title_str=None):
-    min_val = np.min(M)
-    max_val = np.max(M)
-    sum_val = np.sum(M)
-
-    M = np.flipud(M)
-    fig, ax = plt.subplots(figsize=(20, 6))
-    sb.heatmap(M, annot=True, fmt=".2f", cmap='Blues', vmin=np.min(M), vmax=np.max(M), cbar_kws={"shrink": .8})
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.show()
-
-    print(f'sum of mat cells: {sum_val}')
-    print(f'max value is: {max_val}')
-    print(f'min value is: {min_val}')
+def future_sigma(sigma: float, stride: int) -> float:
+    future_variance = sigma ** 2 * stride
+    return future_variance ** 0.5

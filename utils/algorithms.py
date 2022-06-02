@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from networkx import path_weight
 
+from utils.functions import integrate_gauss, future_sigma
 from world.agents.base_agent import BaseAgent
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.basic_robot import BasicRobot
@@ -91,6 +92,7 @@ def static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: 
 def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAgent'], h: float):
     v = agents[0].v
     fv = robots[0].fv
+    d = robots[0].d
     sigma = agents[0].sigma
 
     g = nx.DiGraph()
@@ -103,7 +105,12 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
     for agent in agents:
         g.add_node(str(agent) + '_i', pos=(agent.x - 0.5, agent.y), color='red')
         g.add_node(str(agent) + '_o', pos=(agent.x + 0.5, agent.y), color='red')
-        g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=-1, capacity=1)
+
+        weight = integrate_gauss(
+            mu=agent.x, sigma=future_sigma(sigma=sigma, stride=int(h-agent.y)), left=agent.x - d, right=agent.x + d)
+        g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=-weight, capacity=1)
+
+        # add here more options for the agents
 
     # add edges from robots to agents
     for robot in robots:

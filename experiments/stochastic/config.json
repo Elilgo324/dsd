@@ -9,7 +9,7 @@
   "agent_speed": 1,
   "robot_speed": 2,
   "disablement_range": 0.5,
-  "sigma": 0.5
+  "sigma": 0.1
 }
 
 
