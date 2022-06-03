@@ -172,8 +172,8 @@ def test_gauss():
     mu = 1
     sigma1 = 1
     sigma2 = 2
-    assert integrate_gauss(mu, sigma1, -1000, 1000) > integrate_gauss(mu, sigma2, -1000, 1000)
-    assert integrate_gauss(mu, sigma1, -10, 10) - integrate_gauss(mu, sigma2, -10, 10) < Consts.EPSILON
+    assert integrate_gauss(mu, sigma1, -10, 10) == 1
+    assert integrate_gauss(mu, sigma1, -2, 2) > integrate_gauss(mu, sigma2, -2, 2)
     assert integrate_gauss(mu, sigma1, mu - 2 * sigma1, mu + 2 * sigma1) > 0.95 * integrate_gauss(mu, sigma1, -1000, 1000)
     assert integrate_gauss(mu, sigma1, mu - sigma1, mu + sigma1) > 0.68 * integrate_gauss(mu, sigma2, -1000, 1000)
 

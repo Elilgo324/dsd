@@ -94,37 +94,99 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
     fv = robots[0].fv
     d = robots[0].d
     sigma = agents[0].sigma
+    agents = [a for a in agents if a.y < h]
+    fsigma = {agent: future_sigma(sigma=sigma, stride=int(h - agent.y)) for agent in agents}
+
+    def can_stop_on_line(r: Tuple[float, float], a: Tuple[float, float], h: float):
+        x_a, y_a = a
+        x_r, y_r = r
+        t_a = (h - y_a) / v
+        t_r = math.sqrt((x_a - x_r) ** 2 + (h - y_r) ** 2) / fv
+        return t_r <= t_a
 
     g = nx.DiGraph()
 
     # create robots
     for robot in robots:
-        g.add_node(str(robot), pos=robot.xy, color='blue')
+        g.add_node(str(robot), pos=robot.xy)
 
     # create agents divided to in and out
     for agent in agents:
-        g.add_node(str(agent) + '_i', pos=(agent.x - 0.5, agent.y), color='red')
-        g.add_node(str(agent) + '_o', pos=(agent.x + 0.5, agent.y), color='red')
+        # mu
+        weight = integrate_gauss(mu=agent.x, sigma=fsigma[agent], left=agent.x - d, right=agent.x + d)
 
+        g.add_node('mu_' + str(agent) + '_i')
+        g.add_node('mu_' + str(agent) + '_o', pos=Point(agent.x, h), prob=weight, agent=agent)
+
+        g.add_edge('mu_' + str(agent) + '_i', 'mu_' + str(agent) + '_o', weight=-weight * 1000, capacity=1)
+
+        # +sigma
         weight = integrate_gauss(
-            mu=agent.x, sigma=future_sigma(sigma=sigma, stride=int(h-agent.y)), left=agent.x - d, right=agent.x + d)
-        g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=-weight, capacity=1)
+            mu=agent.x, sigma=fsigma[agent], left=agent.x - d + fsigma[agent], right=agent.x + d + fsigma[agent])
 
-        # add here more options for the agents
+        g.add_node('ps_' + str(agent) + '_i')
+        g.add_node('ps_' + str(agent) + '_o', pos=Point(agent.x + fsigma[agent], h), prob=weight, agent=agent)
+
+        g.add_edge('ps_' + str(agent) + '_i', 'ps_' + str(agent) + '_o', weight=-weight * 1000, capacity=1)
+
+        # -sigma
+        weight = integrate_gauss(mu=agent.x, sigma=future_sigma(sigma=fsigma[agent], stride=int(
+            h - agent.y)), left=agent.x - d - fsigma[agent], right=agent.x + d - fsigma[agent])
+
+        g.add_node('ms_' + str(agent) + '_i')
+        g.add_node('ms_' + str(agent) + '_o', pos=Point(agent.x - fsigma[agent], h), prob=weight, agent=agent)
+
+        g.add_edge('ms_' + str(agent) + '_i', 'ms_' + str(agent) + '_o', weight=-weight * 1000, capacity=1)
 
     # add edges from robots to agents
     for robot in robots:
         for agent in agents:
-            # if can_stop_on_line(r=robot.xy, a=agent.xy, h=h):
-            g.add_edge(str(robot), str(agent) + '_i', weight=0, capacity=1)
+            if can_stop_on_line(r=robot.xy, a=agent.xy, h=h):
+                g.add_edge(str(robot), 'mu_' + str(agent) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=robot.xy, a=(agent.x + fsigma[agent], agent.y), h=h):
+                g.add_edge(str(robot), 'ps_' + str(agent) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=robot.xy, a=(agent.x - fsigma[agent], agent.y), h=h):
+                g.add_edge(str(robot), 'ms_' + str(agent) + '_i', weight=0, capacity=1)
 
     # add edges between agents
     for agent1 in agents:
         for agent2 in agents:
             if agent1 is agent2:
                 continue
-            # if can_stop_on_line(r=(agent1.x, h), a=(agent2.x, h - (agent1.y - agent2.y)), h=h):
-            g.add_edge(str(agent1) + '_o', str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x, h), a=(agent2.x, h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('mu_' + str(agent1) + '_o', 'mu_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x, h), a=(agent2.x + fsigma[agent2], h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('mu_' + str(agent1) + '_o', 'ps_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x, h), a=(agent2.x - fsigma[agent2], h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('mu_' + str(agent1) + '_o', 'ms_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x + fsigma[agent1], h), a=(agent2.x, h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('ps_' + str(agent1) + '_o', 'mu_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x + fsigma[agent1], h),
+                                a=(agent2.x + fsigma[agent2], h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('ps_' + str(agent1) + '_o', 'ps_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x + fsigma[agent1], h),
+                                a=(agent2.x - fsigma[agent2], h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('ps_' + str(agent1) + '_o', 'ms_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x - fsigma[agent1], h),
+                                a=(agent2.x, h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('ms_' + str(agent1) + '_o', 'mu_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x - fsigma[agent1], h),
+                                a=(agent2.x + fsigma[agent2], h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('ms_' + str(agent1) + '_o', 'ps_' + str(agent2) + '_i', weight=0, capacity=1)
+
+            if can_stop_on_line(r=(agent1.x - fsigma[agent1], h),
+                                a=(agent2.x - fsigma[agent2], h - (agent1.y - agent2.y)), h=h):
+                g.add_edge('ms_' + str(agent1) + '_o', 'ms_' + str(agent2) + '_i', weight=0, capacity=1)
 
     # add dummy source and target to use flow
     for robot in robots:
@@ -132,7 +194,9 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
         g.add_edge(str(robot), 't', weight=0, capacity=1)
 
     for agent in agents:
-        g.add_edge(str(agent) + '_o', 't', weight=0, capacity=1)
+        g.add_edge('mu_' + str(agent) + '_o', 't', weight=0, capacity=1)
+        g.add_edge('ps_' + str(agent) + '_o', 't', weight=0, capacity=1)
+        g.add_edge('ms_' + str(agent) + '_o', 't', weight=0, capacity=1)
 
     flow = nx.max_flow_min_cost(g, 's', 't')
 
@@ -147,18 +211,23 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
 
     # calc movement and disabled
     movement = {robot: [] for robot in robots}
-    agents_names_to_agents = {str(agent) + '_o': agent for agent in agents}
+    pos_of_nodes = nx.get_node_attributes(g, 'pos')
+    prob_of_nodes = nx.get_node_attributes(g, 'prob')
+    agents_of_nodes = nx.get_node_attributes(g, 'agent')
+
     disabled = []
+    exp_disabled = 0
     for robot in robots:
         robot_name = str(robot)
         next = list(g.successors(robot_name))[0]
         while next != 't':
             if next[-1] == 'i':
                 next = list(g.successors(next))[0]
-            agent = agents_names_to_agents[next]
-            disabled.append(agent)
-            movement[robot].append(Point(agent.x, h))
+            disabled.append(agents_of_nodes[next])
+            exp_disabled += prob_of_nodes[next]
+            movement[robot].append(pos_of_nodes[next])
             next = list(g.successors(next))[0]
 
     return {'movement': movement,
-            'disabled': disabled}
+            'disabled': disabled,
+            'exp_disabled': exp_disabled}

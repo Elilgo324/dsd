@@ -6,15 +6,17 @@ from math import sqrt, floor
 from random import uniform, randint
 from typing import List, Tuple, Dict, Union
 
+from scipy.integrate import quad
+
+import matplotlib.pyplot as plt
+import scipy.stats
+
 import scipy
 import seaborn as sb
-import matplotlib.pyplot as plt
 import imageio
 import networkx as nx
 import numpy as np
-from scipy import integrate
 from scipy.optimize import linear_sum_assignment
-from scipy import stats
 
 from world.agents.base_agent import BaseAgent
 from world.environment import Environment
@@ -351,11 +353,17 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
 
 
 def integrate_gauss(mu: float, sigma: float, left: float, right: float) -> float:
-    def gauss(x):
-        return stats.norm.pdf(x, mu, sigma)
+    if sigma == 0:
+        if left <= mu <= right:
+            return 1
+        return 0
 
-    value, _ = integrate.quad(gauss, left, right)
-    return value
+    def normal_distribution_function(x):
+        p = 1 / math.sqrt(2 * math.pi * sigma ** 2)
+        return p * np.exp(-0.5 / sigma ** 2 * (x - mu) ** 2)
+
+    stuff = quad(normal_distribution_function, left, right)
+    return round(stuff[0], 3)
 
 
 def future_sigma(sigma: float, stride: int) -> float:

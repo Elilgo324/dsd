@@ -2,7 +2,6 @@ import json
 import time
 from random import seed
 
-from planners.stochastic.partial_blockage.stochastic_window_planner import StochasticAdditivePlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
@@ -15,13 +14,14 @@ with open('config.json') as json_file:
 
 
 def run(planner: Planner):
-    agents = [StochasticAgent(sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
-                                           config['y_buffer'], config['y_buffer'] + config['y_size_init']),
-                              config['agent_speed'], config['advance_distribution'], 0, config['x_size']) for _ in
+    agents = [StochasticAgent(loc=sample_point(config['x_buffer'], config['x_buffer'] + config['x_size'],
+                                               config['y_buffer'], config['y_buffer'] + config['y_size_init'], True),
+                              v=config['agent_speed'],
+                              sigma=config['sigma']) for _ in
               range(config['num_agents'])]
 
-    robots = [TimingRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                          config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
+    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer'], True),
+                         config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
 
     env = StochasticEnvironment(agents=agents, robots=robots, top_border=config['y_size'] + config['y_buffer'],
                                 right_border=config['x_size'] + config['x_buffer'], left_border=config['x_buffer'])
@@ -44,7 +44,7 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StochasticStaticLackPlanner(), StochasticAdditivePlanner()]
+    planners = [StochasticStaticLackPlanner()]
 
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
