@@ -55,7 +55,7 @@ class StochasticAdditiveLackPlanner(Planner):
             acc_damage += cur_acc_damage + wave_size * (len(waves) - i_wave - 1) * cur_completion_time
             num_disabled += cur_num_disabled
 
-        return movement, completion_time, acc_damage, num_disabled, None
+        return movement, completion_time, acc_damage, num_disabled
 
     def __str__(self):
         return f'StochasticAdditive{self.num_waves}LackPlanner'

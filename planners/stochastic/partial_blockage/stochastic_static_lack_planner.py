@@ -39,9 +39,7 @@ class StochasticStaticLackPlanner(Planner):
         return movement_per_h[h_opt], \
                completion_time, \
                damage_score_per_h[h_opt], \
-               exp_disabled_per_h[h_opt],\
-            None
-               # timing_per_h[h_opt]
+               exp_disabled_per_h[h_opt]
 
     def __str__(self):
         return 'StochasticStaticLackPlanner'
