@@ -40,7 +40,7 @@ class StochasticAdditiveLackPlanner(Planner):
             planner = StochasticStaticLackPlanner()
             new_robots = [BasicRobot(cur_movement[robot][-1], fv, r) for robot in new_robots]
             new_agents = [StochasticAgent(
-                Point(normal(loc=agent.x, scale=future_sigma(sigma, int(v * completion_time))),
+                Point(normal(loc=agent.x, scale=sigma_t(sigma, int(v * completion_time))),
                       agent.y + v * completion_time), v, sigma) for agent in wave]
             new_env = StochasticEnvironment(robots=new_robots, agents=new_agents, top_border=env.top_border,
                                             left_border=env.left_border, right_border=env.right_border)
