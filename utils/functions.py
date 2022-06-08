@@ -140,18 +140,19 @@ def integrate_gauss(mu: float, sigma: float, left: float, right: float) -> float
     return round(stuff[0], 3)
 
 
-def sigma_t(sigma: float, t: int) -> float:
+def sigma_t(sigma: float, t: float) -> float:
     # variance_t = sigma ** 2 * t
     return sigma * t ** 0.5
 
 
 def sigma_points_per_h(mu: float, init_sigma: float, init_y: float, h: float) -> Tuple[Point, Point]:
     steps = h - init_y
-    new_sigma = (steps * init_sigma ** 2) ** 0.5
+    new_sigma = sigma_t(init_sigma, steps)
     return Point(mu - new_sigma, h), Point(mu - new_sigma, h)
 
 
-def meeting_points_with_sigmas(robot: BasicRobot, agent: StochasticAgent, border: float) -> Tuple[Point, Point]:
+def meeting_points_with_sigmas(robot: BasicRobot, agent: StochasticAgent, border: float, res: float = 1) -> Tuple[
+    Point, Point]:
     def robot_walk(t):
         return t * robot.fv
 
@@ -165,14 +166,17 @@ def meeting_points_with_sigmas(robot: BasicRobot, agent: StochasticAgent, border
         sigma_right_point = Point(agent.x + sigma, agent.y + t)
         return robot.loc.distance_to(sigma_right_point)
 
-    T = np.arange(0, border, 1)
+    # res determines the accuracy of the intersection
+    T = np.arange(0, border, res)
 
     robot_line = LineString(np.column_stack((T, [robot_walk(t) for t in T])))
     left_line = LineString(np.column_stack((T, [left_dist_from_robot(t) for t in T])))
     right_line = LineString(np.column_stack((T, [right_dist_from_robot(t) for t in T])))
 
-    left_point_xy = robot_line.intersection(left_line).xy
-    right_point_xy = robot_line.intersection(right_line).xy
+    # intersection gives the time and 'distance from robot' values
+    # we are interested only in the first value
+    left_meet_time = robot_line.intersection(left_line).xy[0][0]
+    right_meet_time = robot_line.intersection(right_line).xy[0][0]
 
-    return Point(left_point_xy[0], left_point_xy[1]), \
-           Point(right_point_xy[0], right_point_xy[1])
+    return Point(agent.x - sigma_t(agent.sigma, left_meet_time), left_meet_time + agent.y), \
+           Point(agent.x + sigma_t(agent.sigma, right_meet_time), right_meet_time + agent.y),

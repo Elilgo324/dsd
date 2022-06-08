@@ -247,7 +247,7 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             'num_disabled': expected_num_disabled}
 
 
-def _delete_non_flow_edges(g: nx.DiGraph, flow: nx.DiGraph) -> nx.DiGraph:
+def _delete_non_flow_edges(g: nx.DiGraph, flow) -> nx.DiGraph:
     edges_to_delete = []
     for key1, val1 in flow.items():
         for key2, val2 in val1.items():
@@ -277,7 +277,7 @@ def static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: 
     # add edges from robots to agents
     for robot in robots:
         for agent in agents:
-            if _can_stop_on_line(r=robot.xy, a=agent.xy, h=h):
+            if _can_stop_on_line(r=robot.xy, a=agent.xy, h=h, fv=fv, v=v):
                 g.add_edge(str(robot), str(agent) + '_i', weight=0, capacity=1)
 
     # add edges between agents
