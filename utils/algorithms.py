@@ -169,13 +169,13 @@ def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
 
 def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent'], border: float) \
         -> Dict[str, Union[Dict, int, float]]:
-    MY_INF = 1_000_000
+    v = agents_copy[0].v
     fv = robots[0].fv
 
     movement = {robot: [] for robot in robots}
     busy_time = {robot: 0 for robot in robots}
     avoided_damage = 0
-    expected_num_disabled = 0
+    num_disabled = 0
     potential_damage = sum([border - a.y for a in agents_copy])
 
     # assign while there are agents alive
@@ -192,21 +192,20 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
 
             for a in agents_copy:
                 # updated agent
-                agent_at_time = BaseAgent(Point(a.x, a.y + busy_time[robots[i]] * a.v), a.v)
+                agent_at_time = BaseAgent(Point(a.x, a.y + busy_time[robots[i]] * v), v)
 
                 x_meeting = a.x
                 y_meeting = meeting_height(robot_at_time, agent_at_time)
 
-                # if meeting outside the border, cost is inf
+                # if meeting outside the border, utility is 0
                 if y_meeting > border:
                     utilities[i].append(0)
                     meeting_points[robots[i]][a] = None
                 else:
                     meeting_point = Point(x_meeting, y_meeting)
                     dist = robot_at_time.loc.distance_to(meeting_point)
-                    time = dist / fv
                     utilities[i].append(border - meeting_point.y)
-                    meeting_times[robots[i]][a] = time
+                    meeting_times[robots[i]][a] = dist / fv
                     meeting_points[robots[i]][a] = meeting_point
 
         # apply optimal assignment
@@ -232,26 +231,25 @@ def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgen
             busy_time[assigned_robot] += meeting_times[assigned_robot][assigned_agent]
 
             avoided_damage += (border - meeting_point.y)
-            expected_num_disabled += 1
+            num_disabled += 1
             agents_to_remove.append(assigned_agent)
 
+        # all agents escape
         if non_assigned_num == len(assigned_agents):
             break
 
+        # remove assigned agents
         for a in agents_to_remove:
             agents_copy.remove(a)
 
-    expected_damage = potential_damage - avoided_damage
-    completion_time = max(busy_time.values())
     return {'movement': movement,
-            'completion_time': completion_time,
-            'damage': expected_damage,
-            'num_disabled': expected_num_disabled}
+            'completion_time': max(busy_time.values()),
+            'damage': potential_damage - avoided_damage,
+            'num_disabled': num_disabled}
 
 
 def stochastic_iterative_assignment(robots: List['BasicRobot'], agents_copy: List['StochasticAgent'], border: float) \
         -> Dict[str, Union[Dict, int, float]]:
-    MY_INF = 1_000_000
     fv = robots[0].fv
 
     movement = {robot: [] for robot in robots}
