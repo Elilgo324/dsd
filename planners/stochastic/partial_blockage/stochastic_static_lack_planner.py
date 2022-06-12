@@ -10,13 +10,18 @@ class StochasticStaticLackPlanner(Planner):
         b = env.border
         v = agents[0].v
 
-        H = [meeting_height(robot, agent) for agent in agents for robot in robots if meeting_height(robot, agent) < b]
+        meeting_heights = {robot: {agent: meeting_height(robot, agent) for agent in agents} for robot in robots}
+        H_mu = [meeting_heights[robot][agent] for agent in agents for robot in robots if
+                meeting_heights[robot][agent] < b]
+
+        meeting_heights = {robot: {agent: meeting_points_with_sigmas(robot, agent, b) for agent in agents}
+                           for robot in robots}
+        H_sigmas = [[p.y for p in meeting_heights[robot][agent]] for agent in agents for robot in robots]
+        H_sigmas = [item for t in H_sigmas for item in t if item < b]
+
+        H = H_mu + H_sigmas
         if len(H) == 0:
-            return {robot: [robot.loc] for robot in robots}, \
-                   0, \
-                   sum([b - agent.y for agent in agents]), \
-                   0,\
-                   {robot: [0] for robot in robots}
+            return {robot: [robot.loc] for robot in robots}, 0, sum([b - agent.y for agent in agents]), 0
 
         flow_per_h = {h: stochastic_lack_moves(robots, agents, h) for h in H}
         disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}

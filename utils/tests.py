@@ -8,8 +8,8 @@ from world.robots.basic_robot import BasicRobot
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
 from utils.consts import Consts
-from utils.algorithms import static_lack_moves
-from utils.functions import meeting_height, line_trpv, map_into_2_pows, integrate_gauss
+from utils.algorithms import static_lack_moves, line_trpv
+from utils.functions import meeting_height, map_into_2_pows, integrate_gauss, sigma_t, meeting_points_with_sigmas
 from utils.point import Point
 
 
@@ -174,16 +174,50 @@ def test_gauss():
     sigma2 = 2
     assert integrate_gauss(mu, sigma1, -10, 10) == 1
     assert integrate_gauss(mu, sigma1, -2, 2) > integrate_gauss(mu, sigma2, -2, 2)
-    assert integrate_gauss(mu, sigma1, mu - 2 * sigma1, mu + 2 * sigma1) > 0.95 * integrate_gauss(mu, sigma1, -1000, 1000)
+    assert integrate_gauss(mu, sigma1, mu - 2 * sigma1, mu + 2 * sigma1) > 0.95 * integrate_gauss(mu, sigma1, -1000,
+                                                                                                  1000)
     assert integrate_gauss(mu, sigma1, mu - sigma1, mu + sigma1) > 0.68 * integrate_gauss(mu, sigma2, -1000, 1000)
 
 
+def test_future_sigmas():
+    print('testing future sigmas..')
+    sigma = 4
+    var = sigma ** 2
+    dt = 8
+    assert abs(sigma_t(sigma, dt) ** 2 - var * dt) < Consts.EPSILON
+
+
+def test_meeting_height_sigmas():
+    print('testing meeting height sigmas..')
+    mu = 7
+    sigma = 1.5
+    border = 50
+    agent = StochasticAgent(loc=Point(mu, 8), v=1, sigma=sigma)
+    robot = BasicRobot(loc=Point(4, 10), fv=2)
+    left_point, right_point = meeting_points_with_sigmas(robot, agent, border, res=0.01)
+
+    assert abs(left_point.distance_to(robot.loc) / robot.fv - left_point.y + agent.y) < Consts.EPSILON
+    assert abs(right_point.distance_to(robot.loc) / robot.fv - right_point.y + agent.y) < Consts.EPSILON
+
+    mu = 30
+    sigma = 4
+    border = 500
+    agent = StochasticAgent(loc=Point(mu, 0), v=1, sigma=sigma)
+    robot = BasicRobot(loc=Point(100, 10), fv=1.5)
+    left_point, right_point = meeting_points_with_sigmas(robot, agent, border, res=0.01)
+
+    assert abs(left_point.distance_to(robot.loc) / robot.fv - left_point.y + agent.y) < Consts.EPSILON
+    assert abs(right_point.distance_to(robot.loc) / robot.fv - right_point.y + agent.y) < Consts.EPSILON
+
+
 if __name__ == '__main__':
-    # test_direction()
-    # test_shifted()
-    # test_distance()
-    # test_meeting_height()
-    # test_line_trpv()
-    # test_map_into_2_pows()
-    # test_flow_moves()
+    test_direction()
+    test_shifted()
+    test_distance()
+    test_meeting_height()
+    test_line_trpv()
+    test_map_into_2_pows()
+    test_flow_moves()
     test_gauss()
+    test_future_sigmas()
+    test_meeting_height_sigmas()

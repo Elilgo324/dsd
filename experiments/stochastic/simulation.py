@@ -1,5 +1,7 @@
 import json
+from random import seed
 
+from planners.stochastic.baseline.stochastic_iterative_planner import StochasticIterativePlanner
 from planners.stochastic.partial_blockage.stochastic_additive_lack_planner import StochasticAdditiveLackPlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
@@ -20,16 +22,15 @@ def run(planner: Planner) -> None:
               range(config['num_agents'])]
 
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer'], True),
-                          config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
+                         config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
 
     env = StochasticEnvironment(agents=agents, robots=robots, top_border=config['y_size'] + config['y_buffer'],
                                 right_border=config['x_size'] + config['x_buffer'], left_border=config['x_buffer'])
 
-    movement, time, damage, disabled, timing = planner.plan(env)
+    movement, time, damage, disabled = planner.plan(env)
 
     for r in robots:
         r.set_movement(movement[r])
-        # r.set_timing(timing[r])
 
     is_finished = False
     while not is_finished:
@@ -45,7 +46,8 @@ def run(planner: Planner) -> None:
 
 
 if __name__ == '__main__':
-    planners = [StochasticAdditiveLackPlanner() for _ in range(1)]
+    seed(42)
+    planners = [StochasticIterativePlanner() for _ in range(1)]
 
     for planner in planners:
         print(f'running {str(planner)} ..')

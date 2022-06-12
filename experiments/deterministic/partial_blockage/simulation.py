@@ -1,5 +1,8 @@
 import json
+from random import seed
 
+from planners.deterministic.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
+from planners.deterministic.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from world.agents.deterministic_agent import DeterministicAgent
 from planners.deterministic.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
 from planners.planner import Planner
@@ -15,12 +18,12 @@ def run(planner: Planner) -> None:
                                  config['agent_speed']) for _ in range(config['num_agents'])]
 
     robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer']),
-                         config['robot_speed'], config['disablement_range'], has_mode=True)
+                         config['robot_speed'], config['disablement_range'])
               for _ in range(config['num_robots'])]
 
     env = Environment(agents=agents, robots=robots, border=config['y_size'] + config['y_buffer'])
 
-    movement, _, _, _, _ = planner.plan(env)
+    movement, _, _, _ = planner.plan(env)
 
     for r in robots:
         r.set_movement(movement[r])
@@ -38,8 +41,9 @@ def run(planner: Planner) -> None:
 
 
 if __name__ == '__main__':
+    seed(42)
     # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
-    planners = [AdditiveStaticLackPlanner() for _ in range(1)]
+    planners = [IterativeAssignmentPlanner() for _ in range(1)]
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)
