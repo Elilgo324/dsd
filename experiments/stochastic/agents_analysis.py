@@ -2,6 +2,7 @@ import json
 import time
 from random import seed
 
+from planners.stochastic.partial_blockage.stochastic_additive_lack_planner import StochasticAdditiveLackPlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
@@ -27,7 +28,7 @@ def run(planner: Planner):
                                 right_border=config['x_size'] + config['x_buffer'], left_border=config['x_buffer'])
 
     before = time.time()
-    _, active_time, expected_damage, expected_num_disabled, _ = planner.plan(env)
+    _, active_time, expected_damage, expected_num_disabled = planner.plan(env)
     planning_time = time.time() - before
 
     write_report(planner=str(planner),
@@ -40,14 +41,15 @@ def run(planner: Planner):
                  damage=expected_damage,
                  num_disabled=expected_num_disabled,
                  file_name='agents_results.csv',
-                 is_active_time=True)
+                 is_active_time=True,
+                 sigma=config['sigma'])
 
 
 if __name__ == '__main__':
     planners = [StochasticStaticLackPlanner()]
 
     for planner in planners:
-        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
+        for v in [100, 200, 300, 400, 500]:
             print(f'*** *** v={v} *** ***')
             for s in range(3):
                 seed(s)

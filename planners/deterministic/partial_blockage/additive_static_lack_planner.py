@@ -13,7 +13,7 @@ class AdditiveStaticLackPlanner(Planner):
         b = env.border
         v = agents[0].v
         fv = robots[0].fv
-        r = robots[0].r
+        r = robots[0].d
 
         movement = {robot: [] for robot in robots}
         completion_time = 0

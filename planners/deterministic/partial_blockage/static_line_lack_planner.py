@@ -10,7 +10,8 @@ class StaticLineLackPlanner(Planner):
         b = env.border
         v = agents[0].v
 
-        H = [meeting_height(robot, agent) for agent in agents for robot in robots if meeting_height(robot, agent) < b]
+        meeting_heights = {robot: {agent: meeting_height(robot, agent) for agent in agents} for robot in robots}
+        H = [meeting_heights[robot][agent] for agent in agents for robot in robots if meeting_heights[robot][agent] < b]
         if len(H) == 0:
             return {robot: [robot.loc] for robot in robots}, 0, sum([b - agent.y for agent in agents]), 0
 

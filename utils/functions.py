@@ -64,16 +64,16 @@ def write_report(planner: str,
                  planner_time: float,
                  damage: float,
                  num_disabled: int,
-                 file_name: str = 'results.csv', is_active_time=True) -> None:
-    stats = [planner, num_agents, num_robots, f, d, active_or_copmletion_time, planner_time, damage, num_disabled]
+                 file_name: str = 'results.csv', is_active_time=True, sigma=-1) -> None:
+    stats = [planner, num_agents, num_robots, f, d, sigma, active_or_copmletion_time, planner_time, damage, num_disabled]
 
     if not os.path.exists(file_name):
         file = open(file_name, 'a+')
         if is_active_time:
-            file.write('planner,num_agents,num_robots,f,d,active_time,planner_time,damage,'
+            file.write('planner,num_agents,num_robots,f,d,sigma,active_time,planner_time,damage,'
                        'num_disabled\n')
         else:
-            file.write('planner,num_agents,num_robots,f,d,completion_time,planner_time,damage,'
+            file.write('planner,num_agents,num_robots,f,d,sigma,completion_time,planner_time,damage,'
                        'num_disabled\n')
     else:
         file = open(file_name, 'a+')
