@@ -5,13 +5,11 @@ from utils.functions import *
 
 class StochasticIterativePlanner(Planner):
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
-        robots = env.robots
-        agents_copy = [a.clone() for a in env.agents]
-        stats = stochastic_iterative_assignment(robots, agents_copy, env.border)
+        stats = stochastic_iterative_assignment(env.robots, env.agents, env.border)
         return stats['movement'], \
                stats['completion_time'], \
-               stats['damage'], \
-               stats['num_disabled']
+               stats['expected_damage'], \
+               stats['expected_num_disabled']
 
     def __str__(self):
         return 'StochasticIterativePlanner'

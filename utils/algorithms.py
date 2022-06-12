@@ -167,140 +167,80 @@ def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
     return YX[Y[-1]][X[-1]]
 
 
-def iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent'], border: float) \
+def iterative_assignment(robots: List['BasicRobot'], agents: List['BaseAgent'], border: float) \
         -> Dict[str, Union[Dict, int, float]]:
-    v = agents_copy[0].v
+    agents = [StochasticAgent(loc=agent.loc, v=agent.v, sigma=0) for agent in agents]
+    stats = stochastic_iterative_assignment(robots, agents, border)
+    return {'movement': stats['movement'],
+            'completion_time': stats['completion_time'],
+            'damage': stats['expected_damage'],
+            'num_disabled': stats['expected_num_disabled']}
+
+
+def stochastic_iterative_assignment(robots: List['BasicRobot'], agents: List['StochasticAgent'], border: float) \
+        -> Dict[str, Union[Dict, int, float]]:
+    v = agents[0].v
+    sigma = agents[0].sigma
     fv = robots[0].fv
+    d = robots[0].d
 
     movement = {robot: [] for robot in robots}
-    busy_time = {robot: 0 for robot in robots}
-    avoided_damage = 0
-    num_disabled = 0
-    potential_damage = sum([border - a.y for a in agents_copy])
+    free_time = {robot: 0 for robot in robots}
 
-    # assign while there are agents alive
-    while len(agents_copy) > 0:
-        # calculate assignment costs
-        utilities = [[] for _ in range(len(robots))]
-        meeting_times = {robot: {agent: None for agent in agents_copy} for robot in robots}
-        meeting_points = {robot: {agent: None for agent in agents_copy} for robot in robots}
-        for i in range(len(robots)):
-            # updated robot
-            robot_at_time = robots[i].clone()
-            if len(movement[robots[i]]) > 0:
-                robot_at_time.loc = movement[robots[i]][-1]
-
-            for a in agents_copy:
-                # updated agent
-                agent_at_time = BaseAgent(Point(a.x, a.y + busy_time[robots[i]] * v), v)
-
-                x_meeting = a.x
-                y_meeting = meeting_height(robot_at_time, agent_at_time)
-
-                # if meeting outside the border, utility is 0
-                if y_meeting > border:
-                    utilities[i].append(0)
-                    meeting_points[robots[i]][a] = None
-                else:
-                    meeting_point = Point(x_meeting, y_meeting)
-                    dist = robot_at_time.loc.distance_to(meeting_point)
-                    utilities[i].append(border - meeting_point.y)
-                    meeting_times[robots[i]][a] = dist / fv
-                    meeting_points[robots[i]][a] = meeting_point
-
-        # apply optimal assignment
-        optimal_assignment = linear_sum_assignment(utilities, maximize=True)
-        assigned_robots = optimal_assignment[0]
-        assigned_agents = optimal_assignment[1]
-
-        # update according optimal assignment
-        agents_to_remove = []
-        non_assigned_num = 0
-        for i in range(len(assigned_robots)):
-            assigned_robot = robots[assigned_robots[i]]
-            assigned_agent = agents_copy[assigned_agents[i]]
-            meeting_point = meeting_points[assigned_robot][assigned_agent]
-
-            # if meeting outside the border, continue
-            if meeting_point is None:
-                non_assigned_num += 1
-                continue
-
-            # else, update values
-            movement[assigned_robot].append(meeting_point)
-            busy_time[assigned_robot] += meeting_times[assigned_robot][assigned_agent]
-
-            avoided_damage += (border - meeting_point.y)
-            num_disabled += 1
-            agents_to_remove.append(assigned_agent)
-
-        # all agents escape
-        if non_assigned_num == len(assigned_agents):
-            break
-
-        # remove assigned agents
-        for a in agents_to_remove:
-            agents_copy.remove(a)
-
-    return {'movement': movement,
-            'completion_time': max(busy_time.values()),
-            'damage': potential_damage - avoided_damage,
-            'num_disabled': num_disabled}
-
-
-def stochastic_iterative_assignment(robots: List['BasicRobot'], agents_copy: List['StochasticAgent'], border: float) \
-        -> Dict[str, Union[Dict, int, float]]:
-    fv = robots[0].fv
-
-    movement = {robot: [] for robot in robots}
-    busy_time = {robot: 0 for robot in robots}
-    avoided_damage = 0
+    potential_damage = sum([border - a.y for a in agents])
     expected_num_disabled = 0
-    potential_damage = sum([border - a.y for a in agents_copy])
+    expected_avoided_damage = 0
+
+    agents_copy = [agent.clone() for agent in agents]
 
     # assign while there are agents alive
     while len(agents_copy) > 0:
         # calculate assignment costs
         utilities = [[] for _ in range(len(robots))]
+
         meeting_times = {robot: {agent: None for agent in agents_copy} for robot in robots}
         meeting_points = {robot: {agent: None for agent in agents_copy} for robot in robots}
-        for i in range(len(robots)):
+        meeting_probs = {robot: {agent: None for agent in agents_copy} for robot in robots}
+
+        for i, robot in enumerate(robots):
             # updated robot
-            robot_at_time = robots[i].clone()
-            if len(movement[robots[i]]) > 0:
+            robot_at_time = robot.clone()
+            if len(movement[robot]) > 0:
                 robot_at_time.loc = movement[robots[i]][-1]
 
-            for a in agents_copy:
+            for agent in agents_copy:
                 # updated agent
-                agent_at_time = BaseAgent(Point(a.x, a.y + busy_time[robots[i]] * a.v), a.v)
+                agent_at_time = agent.clone()
+                agent_at_time.loc = Point(agent.x, agent.y + free_time[robot] * v)
 
-                x_meeting = a.x
-                y_meeting = meeting_height(robot_at_time, agent_at_time)
+                meeting_point = Point(agent.x, meeting_height(robot_at_time, agent_at_time))
 
                 # if meeting outside the border, cost is inf
-                if y_meeting > border:
+                if meeting_point.y > border:
                     utilities[i].append(0)
-                    meeting_points[robots[i]][a] = None
+                    meeting_points[robot][agent] = None
                 else:
-                    meeting_point = Point(x_meeting, y_meeting)
                     dist = robot_at_time.loc.distance_to(meeting_point)
-                    time = dist / fv
-                    prob = 0
+                    prob = round(integrate_gauss(mu=agent.x, sigma=sigma_t(sigma=sigma, t=meeting_point.y - agent.y),
+                                                 left=agent.x - d, right=agent.x + d), 3)
                     utilities[i].append((border - meeting_point.y) * prob)
-                    meeting_times[robots[i]][a] = time
-                    meeting_points[robots[i]][a] = meeting_point
+
+                    meeting_times[robot][agent] = dist / fv
+                    meeting_points[robot][agent] = meeting_point
+                    meeting_probs[robot][agent] = prob
 
         # apply optimal assignment
         optimal_assignment = linear_sum_assignment(utilities, maximize=True)
-        assigned_robots = optimal_assignment[0]
-        assigned_agents = optimal_assignment[1]
+        assigned_robot_indexes = optimal_assignment[0]
+        assigned_agent_indexes = optimal_assignment[1]
 
         # update according optimal assignment
         agents_to_remove = []
         non_assigned_num = 0
-        for i in range(len(assigned_robots)):
-            assigned_robot = robots[assigned_robots[i]]
-            assigned_agent = agents_copy[assigned_agents[i]]
+        for i_robot, i_agent in zip(assigned_robot_indexes, assigned_agent_indexes):
+            assigned_robot = robots[i_robot]
+            assigned_agent = agents_copy[i_agent]
+
             meeting_point = meeting_points[assigned_robot][assigned_agent]
 
             # if meeting outside the border, continue
@@ -310,24 +250,23 @@ def stochastic_iterative_assignment(robots: List['BasicRobot'], agents_copy: Lis
 
             # else, update values
             movement[assigned_robot].append(meeting_point)
-            busy_time[assigned_robot] += meeting_times[assigned_robot][assigned_agent]
+            free_time[assigned_robot] += meeting_times[assigned_robot][assigned_agent]
 
-            avoided_damage += (border - meeting_point.y)
-            expected_num_disabled += 1
+            expected_avoided_damage += ((border - meeting_point.y) * meeting_probs[assigned_robot][assigned_agent])
+            expected_num_disabled += meeting_probs[assigned_robot][assigned_agent]
             agents_to_remove.append(assigned_agent)
 
-        if non_assigned_num == len(assigned_agents):
+        if non_assigned_num == len(assigned_agent_indexes):
             break
 
         for a in agents_to_remove:
             agents_copy.remove(a)
 
-    expected_damage = potential_damage - avoided_damage
-    completion_time = max(busy_time.values())
     return {'movement': movement,
-            'completion_time': completion_time,
-            'damage': expected_damage,
-            'num_disabled': expected_num_disabled}
+            'completion_time': max(free_time.values()),
+            'expected_damage': potential_damage - expected_avoided_damage,
+            'expected_num_disabled': expected_num_disabled}
+
 
 def _delete_non_flow_edges(g: nx.DiGraph, flow) -> nx.DiGraph:
     edges_to_delete = []
@@ -419,7 +358,7 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
     # create agents divided to in and out
     for agent in agents:
         # mu
-        weight = integrate_gauss(mu=agent.x, sigma=fsigma[agent], left=agent.x - d, right=agent.x + d)
+        weight = round(integrate_gauss(mu=agent.x, sigma=fsigma[agent], left=agent.x - d, right=agent.x + d), 3)
 
         g.add_node('mu_' + str(agent) + '_i')
         g.add_node('mu_' + str(agent) + '_o', pos=Point(agent.x, h), prob=weight, agent=agent)
@@ -518,8 +457,8 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
     pos_of_nodes = nx.get_node_attributes(g, 'pos')
     prob_of_nodes = nx.get_node_attributes(g, 'prob')
     agents_of_nodes = nx.get_node_attributes(g, 'agent')
-    kuku2=[]
-    kuku=[]
+    kuku2 = []
+    kuku = []
     disabled = []
     exp_disabled = 0
     for robot in robots:
