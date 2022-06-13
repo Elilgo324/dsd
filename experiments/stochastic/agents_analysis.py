@@ -2,6 +2,7 @@ import json
 import time
 from random import seed
 
+from planners.stochastic.baseline.stochastic_iterative_planner import StochasticIterativePlanner
 from planners.stochastic.partial_blockage.stochastic_additive_lack_planner import StochasticAdditiveLackPlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     planners = [StochasticStaticLackPlanner()]
 
     for planner in planners:
-        for v in [100, 200, 300, 400, 500]:
+        for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'*** *** v={v} *** ***')
             for s in range(3):
                 seed(s)

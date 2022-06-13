@@ -457,8 +457,7 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
     pos_of_nodes = nx.get_node_attributes(g, 'pos')
     prob_of_nodes = nx.get_node_attributes(g, 'prob')
     agents_of_nodes = nx.get_node_attributes(g, 'agent')
-    kuku2 = []
-    kuku = []
+
     disabled = []
     exp_disabled = 0
     for robot in robots:
@@ -469,8 +468,6 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
                 next = list(g.successors(next))[0]
             disabled.append(agents_of_nodes[next])
             exp_disabled += prob_of_nodes[next]
-            kuku.append(prob_of_nodes[next])
-            kuku2.append(next)
             movement[robot].append(pos_of_nodes[next])
             next = list(g.successors(next))[0]
 
