@@ -1,15 +1,20 @@
+import json
 import math
+from random import seed
 
 import numpy as np
 
+from planners.deterministic.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
+from planners.stochastic.baseline.stochastic_iterative_planner import StochasticIterativePlanner
 from world.agents.deterministic_agent import DeterministicAgent
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.basic_robot import BasicRobot
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
 from utils.consts import Consts
-from utils.algorithms import static_lack_moves, line_trpv
-from utils.functions import meeting_height, map_into_2_pows, integrate_gauss, sigma_t, meeting_points_with_sigmas
+from utils.algorithms import static_lack_moves, line_trpv, iterative_assignment
+from utils.functions import meeting_height, map_into_2_pows, integrate_gauss, sigma_t, meeting_points_with_sigmas, \
+    sample_point
 from utils.point import Point
 
 
@@ -210,14 +215,70 @@ def test_meeting_height_sigmas():
     assert abs(right_point.distance_to(robot.loc) / robot.fv - right_point.y + agent.y) < Consts.EPSILON
 
 
+def test_iterative_assignment():
+    print('test iterative assignment..')
+    agents = [DeterministicAgent(loc=Point(-3, 2), v=1),
+              DeterministicAgent(loc=Point(-3, 14), v=1),
+              DeterministicAgent(loc=Point(11, 5), v=1),
+              DeterministicAgent(loc=Point(11, 101), v=1)]
+    robots = [BasicRobot(loc=Point(-3,0), fv=2, d=2),
+              BasicRobot(loc=Point(11,1), fv=2, d=2)]
+
+    stats = iterative_assignment(robots, agents, 1000)
+    movement = stats['movement']
+    damage = stats['damage']
+    num_disabled = stats['num_disabled']
+
+    assert damage == (2 + 14 + 4 + 100) and num_disabled == 4
+    assert movement == {robots[0]: [Point(robots[0].x, 4), Point(robots[0].x, 28)],
+                        robots[1]: [Point(robots[1].x, 9), Point(robots[1].x, 201)]}
+
+
+def test_iterative_stochastic_agrees_with_non_stochastic_zero_sigma():
+    print('testing iterative stochastic agrees with non stochastic..')
+    seed(42)
+
+    agents = [StochasticAgent(loc=sample_point(10, 110, 10, 110, True), v=1, sigma=0) for _ in range(10)]
+    robots = [BasicRobot(sample_point(0, 120, 0, 10, True), 2, 1) for _ in range(5)]
+
+    env = StochasticEnvironment(agents=agents, robots=robots, top_border=310, right_border=110, left_border=10)
+
+    det_planner = IterativeAssignmentPlanner()
+    stoch_planner = StochasticIterativePlanner()
+
+    det_results = det_planner.plan(env)
+    stoch_results = stoch_planner.plan(env)
+    assert det_results == stoch_results
+
+
+def test_iterative_stochastic_less_than_non_stochastic():
+    print('testing iterative stochastic less than non stochastic..')
+    seed(42)
+
+    agents = [StochasticAgent(loc=sample_point(10, 110, 10, 110, True), v=1, sigma=0.1) for _ in range(10)]
+    robots = [BasicRobot(sample_point(0, 120, 0, 10, True), 2, 1) for _ in range(5)]
+
+    env = StochasticEnvironment(agents=agents, robots=robots, top_border=310, right_border=110, left_border=10)
+
+    det_planner = IterativeAssignmentPlanner()
+    stoch_planner = StochasticIterativePlanner()
+
+    _, _, damage, num_disabled = det_planner.plan(env)
+    _, _, expected_damage, expected_num_disabled = stoch_planner.plan(env)
+    assert damage < expected_damage and num_disabled > expected_num_disabled
+
+
 if __name__ == '__main__':
-    test_direction()
-    test_shifted()
-    test_distance()
-    test_meeting_height()
-    test_line_trpv()
-    test_map_into_2_pows()
-    test_flow_moves()
-    test_gauss()
-    test_future_sigmas()
-    test_meeting_height_sigmas()
+    # test_direction()
+    # test_shifted()
+    # test_distance()
+    # test_meeting_height()
+    # test_line_trpv()
+    # test_map_into_2_pows()
+    # test_flow_moves()
+    # test_gauss()
+    # test_future_sigmas()
+    # test_meeting_height_sigmas()
+    test_iterative_assignment()
+    test_iterative_stochastic_agrees_with_non_stochastic_zero_sigma()
+    test_iterative_stochastic_less_than_non_stochastic()
