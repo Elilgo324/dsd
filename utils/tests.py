@@ -5,7 +5,9 @@ from random import seed
 import numpy as np
 
 from planners.deterministic.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
+from planners.deterministic.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from planners.stochastic.baseline.stochastic_iterative_planner import StochasticIterativePlanner
+from planners.stochastic.partial_blockage.stochastic_static_lack_planner import StochasticStaticLackPlanner
 from world.agents.deterministic_agent import DeterministicAgent
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.basic_robot import BasicRobot
@@ -216,7 +218,7 @@ def test_meeting_height_sigmas():
 
 
 def test_iterative_assignment():
-    print('test iterative assignment..')
+    print('testing iterative assignment..')
     agents = [DeterministicAgent(loc=Point(-3, 2), v=1),
               DeterministicAgent(loc=Point(-3, 14), v=1),
               DeterministicAgent(loc=Point(11, 5), v=1),
