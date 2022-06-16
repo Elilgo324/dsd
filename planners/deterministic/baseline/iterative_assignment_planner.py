@@ -1,5 +1,5 @@
 from planners.planner import Planner
-from utils.algorithms import iterative_assignment
+from utils.algorithms import iterative_assignment, prev_iterative_assignment
 from utils.functions import *
 
 
@@ -7,7 +7,7 @@ class IterativeAssignmentPlanner(Planner):
     def plan(self, env: Environment) -> Tuple[Dict[BasicRobot, List[Point]], float, float, int]:
         robots = env.robots
         agents_copy = [a.clone() for a in env.agents]
-        stats = iterative_assignment(robots, agents_copy, env.border)
+        stats = prev_iterative_assignment(robots, agents_copy, env.border)
         return stats['movement'], \
                stats['completion_time'], \
                stats['damage'], \

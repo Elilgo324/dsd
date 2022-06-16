@@ -3,6 +3,9 @@ import time
 from math import ceil
 from random import seed
 
+from planners.deterministic.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
+from planners.deterministic.full_blockage.separate_traveling_planner import SeparateTravelingPlanner
+from planners.deterministic.full_blockage.static_line_planner import StaticLinePlanner
 from world.agents.deterministic_agent import DeterministicAgent
 from planners.deterministic.baseline.kmeans_assignment_planner import KmeansAssignmentPlanner
 from planners.planner import Planner
@@ -51,12 +54,12 @@ if __name__ == '__main__':
     #             SeparateTravelingPlanner(),
     #             TravelingLineSamplingPlanner(),
     #             TravelingLinePlanner()]
-    planners = [KmeansAssignmentPlanner()]
+    planners = [SeparateTravelingPlanner()]
 
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'*** *** v={v} *** ***')
-            for s in range(30):
+            for s in range(10):
                 seed(s)
 
                 config['num_agents'] = v

@@ -1,3 +1,5 @@
+from scipy.optimize import linear_sum_assignment
+
 from planners.planner import Planner
 from utils.functions import *
 

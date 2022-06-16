@@ -167,6 +167,59 @@ def line_trpv(h: float, fv: float, agents: List['BaseAgent'], makespan: float) \
     return YX[Y[-1]][X[-1]]
 
 
+def prev_iterative_assignment(robots: List['BasicRobot'], agents_copy: List['BaseAgent'], border) \
+        -> Dict[str, Union[Dict, int, float]]:
+    movement = {robot: [] for robot in robots}
+    free_time = {robot: 0 for robot in robots}
+    expected_damage = 0
+    expected_num_disabled = 0
+
+    while len(agents_copy) > 0:
+        distances = [[] for _ in range(len(robots))]
+        for i in range(len(robots)):
+            for a in agents_copy:
+                robot_at_time = robots[i].clone()
+                if len(movement[robots[i]]) > 0:
+                    robot_at_time.loc = movement[robots[i]][-1]
+
+                x_meeting = a.x
+                agent_at_time = BaseAgent(Point(a.x, a.y + free_time[robots[i]] * a.v), a.v)
+                y_meeting = meeting_height(robot_at_time, agent_at_time)
+                distances[i].append(robot_at_time.loc.distance_to(Point(x_meeting, y_meeting)))
+
+        optimal_assignment = linear_sum_assignment(distances)
+        assigned_robots = optimal_assignment[0]
+        assigned_agents = optimal_assignment[1]
+
+        for i in range(len(assigned_robots)):
+            assigned_robot = robots[assigned_robots[i]]
+            assigned_agent = agents_copy[assigned_agents[i]]
+
+            expected_damage += free_time[assigned_robot]
+            expected_num_disabled += 1
+
+            prev_loc = assigned_robot.loc
+            if len(movement[assigned_robot]) > 0:
+                prev_loc = movement[assigned_robot][-1]
+
+            x_meeting = assigned_agent.x
+            y_meeting = meeting_height(assigned_robot, assigned_agent)
+            meeting_point = Point(x_meeting, y_meeting)
+
+            movement[assigned_robot].append(meeting_point)
+            free_time[assigned_robot] += prev_loc.distance_to(meeting_point) / assigned_robot.fv
+
+        agents_to_remove = [agents_copy[i] for i in assigned_agents]
+        for a in agents_to_remove:
+            agents_copy.remove(a)
+
+    completion_time = max(free_time.values())
+    return {'movement': movement,
+            'completion_time': completion_time,
+            'damage': expected_damage,
+            'num_disabled': expected_num_disabled}
+
+
 def iterative_assignment(robots: List['BasicRobot'], agents: List['BaseAgent'], border: float) \
         -> Dict[str, Union[Dict, int, float]]:
     agents = [StochasticAgent(loc=agent.loc, v=agent.v, sigma=0) for agent in agents]
@@ -196,7 +249,7 @@ def stochastic_iterative_assignment(robots: List['BasicRobot'], agents: List['St
     # assign while there are agents alive
     while len(agents_copy) > 0:
         # calculate assignment costs
-        utilities = [[] for _ in range(len(robots))]
+        costs = [[] for _ in range(len(robots))]
 
         meeting_times = {robot: {agent: None for agent in agents_copy} for robot in robots}
         meeting_points = {robot: {agent: None for agent in agents_copy} for robot in robots}
@@ -217,20 +270,20 @@ def stochastic_iterative_assignment(robots: List['BasicRobot'], agents: List['St
 
                 # if meeting outside the border, cost is inf
                 if meeting_point.y > border:
-                    utilities[i].append(0)
+                    costs[i].append(0)
                     meeting_points[robot][agent] = None
                 else:
                     dist = robot_at_time.loc.distance_to(meeting_point)
                     prob = round(integrate_gauss(mu=agent.x, sigma=sigma_t(sigma=sigma, t=meeting_point.y - agent.y),
                                                  left=agent.x - d, right=agent.x + d), 3)
-                    utilities[i].append((border - meeting_point.y) * prob)
+                    costs[i].append(dist)
 
                     meeting_times[robot][agent] = dist / fv
                     meeting_points[robot][agent] = meeting_point
                     meeting_probs[robot][agent] = prob
 
         # apply optimal assignment
-        optimal_assignment = linear_sum_assignment(utilities, maximize=True)
+        optimal_assignment = linear_sum_assignment(costs, maximize=False)
         assigned_robot_indexes = optimal_assignment[0]
         assigned_agent_indexes = optimal_assignment[1]
 

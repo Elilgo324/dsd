@@ -5,6 +5,7 @@ from scipy.optimize import linear_sum_assignment
 from sklearn.cluster import KMeans
 
 from planners.planner import Planner
+from utils.algorithms import prev_iterative_assignment
 from utils.functions import *
 
 
@@ -23,7 +24,7 @@ class KmeansAssignmentPlanner(Planner):
             label = labels[i]
             clusters[label].append(agent)
 
-        iterative_assignments = {robot: {i_cluster: iterative_assignment([robot], [a.clone() for a in clusters[
+        iterative_assignments = {robot: {i_cluster: prev_iterative_assignment([robot], [a.clone() for a in clusters[
             i_cluster]], env.border) for i_cluster in range(len(clusters))} for robot in robots}
         distances = [[iterative_assignments[robot][i_cluster]['damage']
                       for i_cluster in range(len(clusters))] for robot in robots]

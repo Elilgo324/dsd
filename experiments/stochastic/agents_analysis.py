@@ -47,7 +47,7 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StochasticStaticLackPlanner()]
+    planners = [StochasticIterativePlanner()]
 
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
