@@ -4,6 +4,7 @@ from random import seed
 
 from planners.stochastic.baseline.stochastic_iterative_planner import StochasticIterativePlanner
 from planners.stochastic.partial_blockage.stochastic_additive_lack_planner import StochasticAdditiveLackPlanner
+from planners.stochastic.partial_blockage.stochastic_monotone_lack_planner import StochasticMonotoneLackPlanner
 from world.agents.stochastic_agent import StochasticAgent
 from world.robots.timing_robot import TimingRobot
 from world.stochastic_environment import StochasticEnvironment
@@ -47,12 +48,12 @@ def run(planner: Planner):
 
 
 if __name__ == '__main__':
-    planners = [StochasticIterativePlanner()]
+    planners = [StochasticMonotoneLackPlanner()]
 
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'*** *** v={v} *** ***')
-            for s in range(3):
+            for s in range(1):
                 seed(s)
 
                 config['num_agents'] = v

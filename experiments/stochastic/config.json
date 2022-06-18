@@ -4,12 +4,12 @@
   "y_size": 300,
   "x_buffer": 10,
   "y_buffer": 10,
-  "num_robots": 10,
+  "num_robots": 5,
   "num_agents": 100,
   "agent_speed": 1,
   "robot_speed": 2,
-  "disablement_range": 1,
-  "sigma": 0.1
+  "disablement_range": 5,
+  "sigma": 1
 }
 
 

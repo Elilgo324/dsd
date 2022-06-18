@@ -249,7 +249,7 @@ def stochastic_iterative_assignment(robots: List['BasicRobot'], agents: List['St
     # assign while there are agents alive
     while len(agents_copy) > 0:
         # calculate assignment costs
-        costs = [[] for _ in range(len(robots))]
+        utilities = [[] for _ in range(len(robots))]
 
         meeting_times = {robot: {agent: None for agent in agents_copy} for robot in robots}
         meeting_points = {robot: {agent: None for agent in agents_copy} for robot in robots}
@@ -270,20 +270,20 @@ def stochastic_iterative_assignment(robots: List['BasicRobot'], agents: List['St
 
                 # if meeting outside the border, cost is inf
                 if meeting_point.y > border:
-                    costs[i].append(0)
+                    utilities[i].append(0)
                     meeting_points[robot][agent] = None
                 else:
                     dist = robot_at_time.loc.distance_to(meeting_point)
                     prob = round(integrate_gauss(mu=agent.x, sigma=sigma_t(sigma=sigma, t=meeting_point.y - agent.y),
                                                  left=agent.x - d, right=agent.x + d), 3)
-                    costs[i].append(dist)
+                    utilities[i].append((border - meeting_point.y) * prob)
 
                     meeting_times[robot][agent] = dist / fv
                     meeting_points[robot][agent] = meeting_point
                     meeting_probs[robot][agent] = prob
 
         # apply optimal assignment
-        optimal_assignment = linear_sum_assignment(costs, maximize=False)
+        optimal_assignment = linear_sum_assignment(utilities, maximize=True)
         assigned_robot_indexes = optimal_assignment[0]
         assigned_agent_indexes = optimal_assignment[1]
 
@@ -314,7 +314,7 @@ def stochastic_iterative_assignment(robots: List['BasicRobot'], agents: List['St
 
         for a in agents_to_remove:
             agents_copy.remove(a)
-
+    print(f'pot {potential_damage} av {expected_avoided_damage}')
     return {'movement': movement,
             'completion_time': max(free_time.values()),
             'expected_damage': potential_damage - expected_avoided_damage,

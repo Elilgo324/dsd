@@ -36,6 +36,10 @@ class BasicRobot:
     def fv(self) -> float:
         return self._fv
 
+    @fv.setter
+    def fv(self, value):
+        self._fv = value
+
     @property
     def d(self) -> float:
         return self._d

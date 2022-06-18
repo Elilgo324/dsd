@@ -39,6 +39,10 @@ class BaseAgent(ABC):
     def v(self) -> float:
         return self._v
 
+    @v.setter
+    def v(self, value) -> None:
+        self._v = value
+
     def clone(self) -> 'BaseAgent':
         return deepcopy(self)
 
