@@ -314,7 +314,7 @@ def stochastic_iterative_assignment(robots: List['BasicRobot'], agents: List['St
 
         for a in agents_to_remove:
             agents_copy.remove(a)
-    print(f'pot {potential_damage} av {expected_avoided_damage}')
+
     return {'movement': movement,
             'completion_time': max(free_time.values()),
             'expected_damage': potential_damage - expected_avoided_damage,
