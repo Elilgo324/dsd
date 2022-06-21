@@ -1,4 +1,5 @@
 import json
+import math
 import time
 from random import seed
 
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     for planner in planners:
         for v in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
             print(f'*** *** v={v} *** ***')
-            for s in range(1):
+            for s in range(30):
                 seed(s)
 
                 config['num_agents'] = v

@@ -61,4 +61,4 @@ class StochasticAdditiveLackPlanner(Planner):
         return movement, completion_time, acc_damage, num_disabled
 
     def __str__(self):
-        return f'StochasticAdditive{self.num_waves}LackPlanner'
+        return f'StochasticAdditiveLackPlanner'
