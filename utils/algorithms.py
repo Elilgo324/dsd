@@ -519,7 +519,7 @@ def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAg
         while next != 't':
             if next[-1] == 'i':
                 next = list(g.successors(next))[0]
-            disabled.append(agents_of_nodes[next])
+            disabled.append((agents_of_nodes[next], prob_of_nodes[next]))
             exp_disabled += prob_of_nodes[next]
             movement[robot].append(pos_of_nodes[next])
             next = list(g.successors(next))[0]
