@@ -21,7 +21,7 @@ class StochasticMonotoneLackPlanner(Planner):
         assert vertical_fv > v
 
         actual_agents = [StochasticAgent(loc=agent.loc, sigma=sigma, v=vertical_fv - v) for agent in env.agents]
-        actual_robots = [BasicRobot(loc=Point(robot.x,env.border), fv=horizontal_fv, d=d) for robot in env.robots]
+        actual_robots = [BasicRobot(loc=Point(robot.x, env.border), fv=horizontal_fv, d=d) for robot in env.robots]
 
         stats = stochastic_lack_moves(actual_robots, actual_agents, h=env.border)
         disabled = stats['disabled']
@@ -32,9 +32,8 @@ class StochasticMonotoneLackPlanner(Planner):
             integrate_gauss(mu=agent.x, sigma=sigma_t(sigma=sigma, t=meeting_heights[agent] - agent.y),
                             left=agent.x - d, right=agent.x + d), 3) for agent in disabled}
 
-        expected_damage = sum([
-            meeting_probs[agent] * (meeting_heights[agent] - agent.y)
-            + (1 - meeting_probs[agent]) * (env.border - agent.y) for agent in disabled])
+        potential_damage = sum([(env.border - agent.y) for agent in env.agents])
+        expected_avoided_damage = sum([meeting_probs[agent] * (env.border - meeting_heights[agent]) for agent in disabled])
         completion_time = max(meeting_heights.values()) / vertical_fv
 
         mod_movement = stats['movement']
@@ -42,7 +41,7 @@ class StochasticMonotoneLackPlanner(Planner):
 
         return movement, \
                completion_time, \
-               expected_damage, \
+               potential_damage - expected_avoided_damage, \
                stats['exp_disabled']
 
     def __str__(self):
