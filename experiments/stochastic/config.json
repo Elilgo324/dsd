@@ -7,7 +7,7 @@
   "num_robots": 5,
   "num_agents": 100,
   "agent_speed": 1,
-  "robot_speed": 2,
+  "robot_speed": 1.5,
   "disablement_range": 5,
   "sigma": 1
 }
