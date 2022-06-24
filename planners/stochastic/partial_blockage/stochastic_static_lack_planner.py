@@ -24,7 +24,7 @@ class StochasticStaticLackPlanner(Planner):
             return {robot: [robot.loc] for robot in robots}, 0, sum([b - agent.y for agent in agents]), 0
 
         flow_per_h = {h: stochastic_lack_moves(robots, agents, h) for h in H}
-        disabled_per_h = {h: flow_per_h[h]['disabled'] for h in H}
+        disabled_per_h = {h: [x[0] for x in flow_per_h[h]['disabled']] for h in H}
         movement_per_h = {h: flow_per_h[h]['movement'] for h in H}
         exp_disabled_per_h = {h: flow_per_h[h]['exp_disabled'] for h in H}
 
