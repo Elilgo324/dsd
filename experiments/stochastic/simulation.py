@@ -1,4 +1,5 @@
 import json
+import math
 from random import seed
 
 from planners.stochastic.baseline.stochastic_iterative_planner import StochasticIterativePlanner
@@ -22,7 +23,7 @@ def run(planner: Planner) -> None:
                               sigma=config['sigma']) for _ in
               range(config['num_agents'])]
 
-    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], 0, config['y_buffer'], True),
+    robots = [BasicRobot(sample_point(0, config['x_size'] + 2 * config['x_buffer'], config['y_buffer'], config['y_buffer'], True),
                          config['robot_speed'], config['disablement_range']) for _ in range(config['num_robots'])]
 
     env = StochasticEnvironment(agents=agents, robots=robots, top_border=config['y_size'] + config['y_buffer'],
@@ -49,7 +50,9 @@ def run(planner: Planner) -> None:
 if __name__ == '__main__':
     seed(42)
     planners = [StochasticMonotoneLackPlanner() for _ in range(1)]
+    config['robot_speed'] = 1.2
 
     for planner in planners:
         print(f'running {str(planner)} ..')
+        planner.alpha = math.pi / 9
         run(planner)
