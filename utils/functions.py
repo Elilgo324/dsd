@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from math import sqrt, floor
 from random import uniform, randint
-from typing import List, Tuple, Dict, Union
+from typing import List, Tuple, Dict, Union, Optional
 
 from scipy.integrate import quad
 
@@ -65,7 +65,8 @@ def write_report(planner: str,
                  damage: float,
                  num_disabled: int,
                  file_name: str = 'results.csv', is_active_time=True, sigma=-1) -> None:
-    stats = [planner, num_agents, num_robots, f, d, sigma, active_or_copmletion_time, planner_time, damage, num_disabled]
+    stats = [planner, num_agents, num_robots, f, d, sigma, active_or_copmletion_time, planner_time, damage,
+             num_disabled]
 
     if not os.path.exists(file_name):
         file = open(file_name, 'a+')
@@ -152,7 +153,7 @@ def sigma_points_per_h(mu: float, init_sigma: float, init_y: float, h: float) ->
 
 
 def meeting_points_with_sigmas(robot: BasicRobot, agent: StochasticAgent, border: float, res: float = 1) -> Tuple[
-    Point, Point]:
+    Optional[Point], Optional[Point]]:
     def robot_walk(t):
         return t * robot.fv
 
@@ -175,8 +176,16 @@ def meeting_points_with_sigmas(robot: BasicRobot, agent: StochasticAgent, border
 
     # intersection gives the time and 'distance from robot' values
     # we are interested only in the first value
-    left_meet_time = robot_line.intersection(left_line).xy[0][0]
-    right_meet_time = robot_line.intersection(right_line).xy[0][0]
+    try:
+        left_meet_time = robot_line.intersection(left_line).xy[0][0]
+        left_meeting_point = Point(agent.x - sigma_t(agent.sigma, left_meet_time), left_meet_time + agent.y)
+    except:
+        left_meeting_point = None
 
-    return Point(agent.x - sigma_t(agent.sigma, left_meet_time), left_meet_time + agent.y), \
-           Point(agent.x + sigma_t(agent.sigma, right_meet_time), right_meet_time + agent.y),
+    try:
+        right_meet_time = robot_line.intersection(right_line).xy[0][0]
+        right_meeting_point = Point(agent.x + sigma_t(agent.sigma, right_meet_time), right_meet_time + agent.y)
+    except:
+        right_meeting_point = None
+
+    return left_meeting_point, right_meeting_point

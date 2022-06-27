@@ -16,7 +16,8 @@ class StochasticStaticLackPlanner(Planner):
 
         meeting_heights = {robot: {agent: meeting_points_with_sigmas(robot, agent, b) for agent in agents}
                            for robot in robots}
-        H_sigmas = [[p.y for p in meeting_heights[robot][agent]] for agent in agents for robot in robots]
+
+        H_sigmas = [[p.y for p in meeting_heights[robot][agent] if p is not None] for agent in agents for robot in robots]
         H_sigmas = [item for t in H_sigmas for item in t if item < b]
 
         H = H_mu + H_sigmas
