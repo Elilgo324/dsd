@@ -52,26 +52,3 @@ TODO add link to paper
 #### AdditiveStaticLack
 
 ![StaticLinePlanner](readme_gifs/AdditiveStaticLack_rm.gif)
-
-### BaseLine
-
-#### IterativeAssignment
-
-#### KmeansAssignment
-
-## Stochastic movement
-
-#### StochasticStaticLack
-
-#### StochasticAdditiveLack
-
-#### TBD
-
-### BaseLine
-
-#### StochasticIterativeAssignment
-
-
-
-
-
