@@ -2,6 +2,7 @@ import json
 import time
 from random import seed
 
+from planners.deterministic.partial_blockage.separate_static_lack_planner import SeparateStaticLackPlanner
 from world.agents.deterministic_agent import DeterministicAgent
 from planners.deterministic.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
 from planners.planner import Planner
@@ -42,7 +43,7 @@ def run(planner: Planner):
 if __name__ == '__main__':
     # planners = [StaticLineLackPlanner(), IterativeAssignmentPlanner()]
     # planners = [PracticalStaticLineLacklPlanner(), IterativeAssignmentPlanner(), KmeansAssignmentPlanner()]
-    planners = [AdditiveStaticLackPlanner()]
+    planners = [SeparateStaticLackPlanner()]
 
     for planner in planners:
         for v in [100, 200, 300, 400, 500, 600, 700, 800]:

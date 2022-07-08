@@ -1,4 +1,7 @@
+from scipy.optimize import linear_sum_assignment
+
 from planners.planner import Planner
+from utils.algorithms import single_static_lack_moves
 from utils.functions import *
 
 
@@ -48,7 +51,7 @@ class SeparateStaticLackPlanner(Planner):
                     continue
 
                 H = [meeting_height(robot, agent) for agent in bucket]
-                flow_per_h = {h: static_lack_moves([robot], bucket, h) for h in H}
+                flow_per_h = {h: single_static_lack_moves([robot], bucket, h) for h in H}
 
                 def damage_score(h):
                     non_escaping = flow_per_h[h]['disabled']

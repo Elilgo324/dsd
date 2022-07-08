@@ -74,7 +74,7 @@ def write_report(planner: str,
             file.write('planner,num_agents,num_robots,f,d,sigma,active_time,planner_time,damage,'
                        'num_disabled\n')
         else:
-            file.write('planner,num_agents,num_robots,f,d,sigma,completion_time,planner_time,damage,'
+            file.write('planner,num_agents,num_robots,f,d,completion_time,planner_time,damage,'
                        'num_disabled\n')
     else:
         file = open(file_name, 'a+')

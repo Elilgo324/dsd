@@ -394,6 +394,66 @@ def static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: 
             'disabled': disabled}
 
 
+def single_static_lack_moves(robots: List['BasicRobot'], agents: List['BaseAgent'], h: float):
+    v = agents[0].v
+    fv = robots[0].fv
+    robot = robots[0]
+
+    g = nx.DiGraph()
+
+    # create robot
+    g.add_node(str(robot), pos=robot.xy, color='blue')
+
+    # create agents divided to in and out
+    for agent in agents:
+        g.add_node(str(agent) + '_i', pos=(agent.x - 0.5, agent.y), color='red')
+        g.add_node(str(agent) + '_o', pos=(agent.x + 0.5, agent.y), color='red')
+        g.add_edge(str(agent) + '_i', str(agent) + '_o', weight=0)
+
+    # add edges from robots to agents
+    for agent in agents:
+        if _can_stop_on_line(r=robot.xy, a=agent.xy, h=h, fv=fv, v=v):
+            g.add_edge(str(robot), str(agent) + '_i', weight=0)
+
+    # add edges between agents
+    for agent1 in agents:
+        for agent2 in agents:
+            if agent1 is agent2:
+                continue
+            if _can_stop_on_line(r=(agent1.x, h), a=(agent2.x, h - (agent1.y - agent2.y)), h=h, v=v, fv=fv):
+                g.add_edge(str(agent1) + '_o', str(agent2) + '_i', weight=0)
+
+    # add dummy source and target
+    g.add_edge('s', str(robot), weight=0)
+    g.add_edge(str(robot), 't', weight=0)
+
+    for agent in agents:
+        g.add_edge(str(agent) + '_o', 't', weight=0)
+
+    longest_path = nx.shortest_path(G=g, source='s', target='t')
+
+    # # delete all edges without flow
+    # g = _delete_non_flow_edges(g=g, flow=flow)
+    #
+    # # calc movement and disabled
+    # movement = {robot: [] for robot in robots}
+    # agents_names_to_agents = {str(agent) + '_o': agent for agent in agents}
+    # disabled = []
+    # for robot in robots:
+    #     robot_name = str(robot)
+    #     next = list(g.successors(robot_name))[0]
+    #     while next != 't':
+    #         if next[-1] == 'i':
+    #             next = list(g.successors(next))[0]
+    #         agent = agents_names_to_agents[next]
+    #         disabled.append(agent)
+    #         movement[robot].append(Point(agent.x, h))
+    #         next = list(g.successors(next))[0]
+
+    return {'movement': 0,
+            'disabled': 0}
+
+
 def stochastic_lack_moves(robots: List['BasicRobot'], agents: List['StochasticAgent'], h: float):
     v = agents[0].v
     fv = robots[0].fv
