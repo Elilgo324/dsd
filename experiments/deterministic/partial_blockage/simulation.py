@@ -2,6 +2,7 @@ import json
 from random import seed
 
 from planners.deterministic.baseline.iterative_assignment_planner import IterativeAssignmentPlanner
+from planners.deterministic.partial_blockage.separate_static_lack_planner import SeparateStaticLackPlanner
 from planners.deterministic.partial_blockage.static_line_lack_planner import StaticLineLackPlanner
 from world.agents.deterministic_agent import DeterministicAgent
 from planners.deterministic.partial_blockage.additive_static_lack_planner import AdditiveStaticLackPlanner
@@ -43,7 +44,7 @@ def run(planner: Planner) -> None:
 if __name__ == '__main__':
     seed(42)
     # planners = [RandomWalk10Planner(), OfflineChasingPlanner(), OnlineChasingPlanner(), StaticLinePlanner()]
-    planners = [IterativeAssignmentPlanner() for _ in range(1)]
+    planners = [SeparateStaticLackPlanner() for _ in range(1)]
     for planner in planners:
         print(f'running {str(planner)} ..')
         run(planner)
